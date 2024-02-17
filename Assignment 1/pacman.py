@@ -13,6 +13,7 @@ from search import *
 dico = {}
 class Pacman(Problem):
 
+    # ! Function added !
     def getPos_Pacman(self, grid, nbRows, nbCols):
         for i in range(nbRows):
             for j in range(nbCols):
@@ -137,7 +138,16 @@ if __name__ == "__main__":
 
     # Example of search
     start_timer = time.perf_counter()
-    node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
+
+    # node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
+    # node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
+
+    # node, nb_explored, remaining_nodes = uniform_cost_search(problem)
+    # node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
+    # node, nb_explored, remaining_nodes = depth_first_graph_search(problem)
+    # node, nb_explored = depth_limited_search(problem)
+    node, nb_explored = iterative_deepening_search(problem)
+
     end_timer = time.perf_counter()
 
     # Example of print
@@ -147,7 +157,7 @@ if __name__ == "__main__":
         # assuming that the __str__ function of state outputs the correct format
         print(n.state)
 
-    print("* Execution time:\t", str(end_timer - start_timer))
-    print("* Path cost to goal:\t", node.depth, "moves")
-    print("* #Nodes explored:\t", nb_explored)
-    print("* Queue size at goal:\t",  remaining_nodes)
+    # print("* Execution time:\t", str(end_timer - start_timer))
+    # print("* Path cost to goal:\t", node.depth, "moves")
+    # print("* #Nodes explored:\t", nb_explored)
+    # print("* Queue size at goal:\t",  remaining_nodes)

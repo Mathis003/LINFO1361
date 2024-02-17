@@ -321,7 +321,7 @@ def depth_limited_search(problem, limit=50):
         else:
             cutoff_occurred = False
             for child in node.expand(problem):
-                result = recursive_dls(child, problem, limit - 1)
+                result = recursive_dls(child, problem, limit - 1, explored_nodes)
                 if result == 'cutoff':
                     cutoff_occurred = True
                 elif result is not None:
@@ -329,7 +329,7 @@ def depth_limited_search(problem, limit=50):
             return 'cutoff' if cutoff_occurred else None
 
     # Body of depth_limited_search:
-    return recursive_dls(Node(problem.initial), problem, limit)
+    return recursive_dls(Node(problem.initial), problem, limit, explored_nodes)
 
 
 def iterative_deepening_search(problem):
