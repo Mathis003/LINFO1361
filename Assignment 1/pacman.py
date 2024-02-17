@@ -4,8 +4,8 @@ Name of the author(s):
 """
 import time
 import sys
-from search import *
 
+from search import *
 
 #################
 # Problem class #
@@ -13,21 +13,85 @@ from search import *
 dico = {}
 class Pacman(Problem):
 
+    def getPos_Pacman(self, grid, nbRows, nbCols):
+        for i in range(nbRows):
+            for j in range(nbCols):
+                if grid[i][j] == "P":
+                    return (i, j)
+        return None
 
 
+    # Define the possible actions for a given state
     def actions(self, state):
-        # Define the possible actions for a given state
-        pass
 
+        nbRows = state.shape[0]
+        nbCols = state.shape[1]
 
-    def result(self, state, action):
-        # Apply the action to the state and return the new state
-        pass
+        result = []
+
+        (row_pac, col_pac) = self.getPos_Pacman(state.grid, nbRows, nbCols)
+
+        for k in range(1, nbCols - col_pac):
+            if (state.grid[row_pac][col_pac + k] == "#"):
+                break
+            else:
+                result.append((row_pac, col_pac + k))
+
+        for k in range(1, col_pac + 1):
+            if (state.grid[row_pac][col_pac - k] == "#"):
+                break
+            else:
+                result.append((row_pac, col_pac - k))
         
-    def goal_test(self, state):
-    	#check for goal state
-    	pass
+        for k in range(1, nbRows - row_pac):
+            if (state.grid[row_pac + k][col_pac] == "#"):
+                break
+            else:
+                result.append((row_pac + k, col_pac))
+        
+        for k in range(1, row_pac + 1):
+            if (state.grid[row_pac - k][col_pac] == "#"):
+                break
+            else:
+                result.append((row_pac - k, col_pac))
+            
+        return result
+                        
+    # Apply the action to the state and return the new state
+    def result(self, state, action):
 
+        nbRows = state.shape[0]
+        nbCols = state.shape[1]
+
+        (row_pac, col_pac) = self.getPos_Pacman(state.grid, nbRows, nbCols)
+
+        new_answer = state.answer
+
+        if state.grid[action[0]][action[1]] == "F":
+            new_answer -= 1
+
+        new_grid = []
+        for i in range(nbRows):
+            row = list(state.grid[i])
+            if i == action[0]:
+                row[action[1]] = "P"
+            if i == row_pac:
+                row[col_pac] = "."
+            new_grid.append(tuple(row))
+
+        move = "Move to ({}, {})".format(action[0], action[1])
+        if new_answer == 0:
+            move += " Goal State"
+
+        return State(state.shape, tuple(new_grid), new_answer, move)
+
+    
+    # Check for goal state
+    def goal_test(self, state):
+        
+        if state.answer == 0:
+            return True
+        return False 
 
 
 ###############
@@ -35,7 +99,7 @@ class Pacman(Problem):
 ###############
 class State:
 
-    def __init__(self, shape, grid, answer=None, move="Init"):
+    def __init__(self, shape, grid, answer=None, move="Init State"):
         self.shape = shape
         self.answer = answer
         self.grid = grid
@@ -59,12 +123,16 @@ def read_instance_file(filepath):
 
 
 if __name__ == "__main__":
+    
     if len(sys.argv) != 2:
         print(f"Usage: ./Pacman.py <path_to_instance_file>")
+        exit(1)
+
     filepath = sys.argv[1]
 
     shape, initial_grid, initial_fruit_count = read_instance_file(filepath)
-    init_state = State(shape, tuple(initial_grid), initial_fruit_count, "Init")
+    init_state = State(shape, tuple(initial_grid), initial_fruit_count, "Init State")
+
     problem = Pacman(init_state)
 
     # Example of search
