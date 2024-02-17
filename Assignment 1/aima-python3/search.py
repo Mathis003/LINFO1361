@@ -175,7 +175,6 @@ class SimpleProblemSolvingAgentProgram:
 # ______________________________________________________________________________
 # Uninformed Search algorithms
 
-
 def breadth_first_tree_search(problem):
     """
     [Figure 3.7]
@@ -240,7 +239,6 @@ def depth_first_graph_search(problem):
         frontier.extend(child for child in node.expand(problem)
                         if child.state not in explored and child not in frontier)
     return None, explored_nodes, len(frontier)
-
 
 def breadth_first_graph_search(problem):
     """[Figure 3.11]
@@ -307,7 +305,6 @@ def uniform_cost_search(problem, display=False):
     """[Figure 3.14]"""
     return best_first_graph_search(problem, lambda node: node.path_cost, display)
 
-
 def depth_limited_search(problem, limit=50):
     """[Figure 3.17]"""
 
@@ -331,7 +328,6 @@ def depth_limited_search(problem, limit=50):
     # Body of depth_limited_search:
     return recursive_dls(Node(problem.initial), problem, limit, explored_nodes)
 
-
 def iterative_deepening_search(problem):
     """[Figure 3.18]"""
     for depth in range(sys.maxsize):
@@ -346,9 +342,7 @@ def iterative_deepening_search(problem):
 
 greedy_best_first_graph_search = best_first_graph_search
 
-
 # Greedy best-first search is accomplished by specifying f(n) = h(n).
-
 
 def astar_search(problem, h=None, display=False):
     """A* search is best-first graph search with f(n) = g(n)+h(n).

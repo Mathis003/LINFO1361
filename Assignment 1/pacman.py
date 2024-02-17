@@ -136,28 +136,45 @@ if __name__ == "__main__":
 
     problem = Pacman(init_state)
 
-    # Example of search
+
+    """
+    ## Uninformed Search ##
+
+    breadth_first_tree_search(problem)
+    depth_first_tree_search(problem)
+    depth_first_graph_search(problem)
+    breadth_first_graph_search(problem)
+    best_first_graph_search(problem, f, display=False)
+    uniform_cost_search(problem, display=False)
+    depth_limited_search(problem, limit=50)
+    iterative_deepening_search(problem)
+
+    ## Informed Search ##
+
+    astar_search(problem, h=None, display=False)
+
+    ## Other Search ##
+
+    recursive_best_first_search(problem, h=None)
+    hill_climbing(problem)
+    exp_schedule(k=20, lam=0.005, limit=100)
+    simulated_annealing(problem, schedule=exp_schedule())
+    simulated_annealing_full(problem, schedule=exp_schedule())
+    """
+
     start_timer = time.perf_counter()
 
-    # node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
-    # node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
-
-    # node, nb_explored, remaining_nodes = uniform_cost_search(problem)
-    # node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
-    # node, nb_explored, remaining_nodes = depth_first_graph_search(problem)
-    # node, nb_explored = depth_limited_search(problem)
-    node, nb_explored = iterative_deepening_search(problem)
+    # node, nb_explored = iterative_deepening_search(problem)
+    node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
 
     end_timer = time.perf_counter()
 
-    # Example of print
     path = node.path()
 
-    for n in path:
-        # assuming that the __str__ function of state outputs the correct format
-        print(n.state)
+    for node in path:
+        print(node.state)
 
-    # print("* Execution time:\t", str(end_timer - start_timer))
-    # print("* Path cost to goal:\t", node.depth, "moves")
-    # print("* #Nodes explored:\t", nb_explored)
-    # print("* Queue size at goal:\t",  remaining_nodes)
+    print("* Execution time:\t", str(end_timer - start_timer))
+    print("* Path cost to goal:\t", node.depth, "moves")
+    print("* # Nodes explored:\t", nb_explored)
+    print("* Queue size at goal:\t",  remaining_nodes)
