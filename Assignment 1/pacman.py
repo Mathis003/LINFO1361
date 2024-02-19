@@ -98,6 +98,7 @@ class Pacman(Problem):
     # Check for goal state
     def goal_test(self, state):
         return True if (state.answer == 0) else False
+        
 
 
 ###############
@@ -120,12 +121,29 @@ class State:
         #     if self.pos_pacman != None:
         #         break;
 
-
     def __str__(self):
         s = self.move + "\n"
         for line in self.grid:
             s += "".join(line) + "\n"
         return s
+    
+    # Strip : Begin
+    def __hash__(self):
+        return hash(self.grid)
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        if self.answer != other.answer:
+            return False
+        
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                if (self.grid[i][j] != other.grid[i][j]):
+                    return False
+        return True
+    # Strip : End
 
 
 def read_instance_file(filepath):
@@ -178,16 +196,16 @@ if __name__ == "__main__":
 
     start_timer = time.perf_counter()
 
-    node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
+    node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
 
     end_timer = time.perf_counter()
 
-    # path = node.path()
+    path = node.path()
 
-    # for node in path:
-    #     print(node.state)
+    for node in path:
+        print(node.state)
 
-    print("* Execution time:\t", str(end_timer - start_timer))
-    print("* Path cost to goal:\t", node.depth, "moves")
-    print("* # Nodes explored:\t", nb_explored)
-    print("* Queue size at goal:\t",  remaining_nodes)
+    # print("* Execution time:\t", str(end_timer - start_timer))
+    # print("* Path cost to goal:\t", node.depth, "moves")
+    # print("* # Nodes explored:\t", nb_explored)
+    # print("* Queue size at goal:\t",  remaining_nodes)
