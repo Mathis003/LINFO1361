@@ -307,7 +307,7 @@ def uniform_cost_search(problem, display=False):
 
 def depth_limited_search(problem, limit=50):
     """[Figure 3.17]"""
-
+    print("hg")
     explored_nodes = 0
     def recursive_dls(node, problem, limit, explored_nodes):
         explored_nodes += 1

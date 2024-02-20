@@ -10,116 +10,96 @@ from search import *
 #################
 # Problem class #
 #################
-
-dico = {}
-
 class Pacman(Problem):
-
-    # ! Function added !
-    def getPos_Pacman(self, grid, nbRows, nbCols):
-        for i in range(nbRows):
-            for j in range(nbCols):
-                if grid[i][j] == "P":
-                    return (i, j)
-        return None
-
 
     # Define the possible actions for a given state
     def actions(self, state):
 
-        nbRows = state.shape[0]
-        nbCols = state.shape[1]
+        nbRows, nbCols = state.shape
+        row_pac, col_pac = state.pos_pacman
 
         result = []
-
-        (row_pac, col_pac) = self.getPos_Pacman(state.grid, nbRows, nbCols)
-        #(row_pac, col_pac) = state.pos_pacman
-
+        
         for k in range(1, nbCols - col_pac):
             if (state.grid[row_pac][col_pac + k] == "#"):
                 break
             else:
-                # yield (row_pac, col_pac + k)
                 result.append((row_pac, col_pac + k))
 
         for k in range(1, col_pac + 1):
             if (state.grid[row_pac][col_pac - k] == "#"):
                 break
             else:
-                # yield (row_pac, col_pac - k)
                 result.append((row_pac, col_pac - k))
         
         for k in range(1, nbRows - row_pac):
             if (state.grid[row_pac + k][col_pac] == "#"):
                 break
             else:
-                #yield (row_pac + k, col_pac)
                 result.append((row_pac + k, col_pac))
         
         for k in range(1, row_pac + 1):
             if (state.grid[row_pac - k][col_pac] == "#"):
                 break
             else:
-                #yield (row_pac - k, col_pac)
                 result.append((row_pac - k, col_pac))
             
         return result
                         
     # Apply the action to the state and return the new state
     def result(self, state, action):
-
-        nbRows = state.shape[0]
-        nbCols = state.shape[1]
-
-        (row_pac, col_pac) = self.getPos_Pacman(state.grid, nbRows, nbCols)
-        # (row_pac, col_pac) = state.pos_pacman
-
+        
+        newX, newY = action
+        row_pac, col_pac = state.pos_pacman
         new_answer = state.answer
 
-        if state.grid[action[0]][action[1]] == "F":
+        if state.grid[newX][newY] == "F":
             new_answer -= 1
-
+        
         new_grid = []
-        for i in range(nbRows):
-            row = list(state.grid[i])
-            if i == action[0]:
-                row[action[1]] = "P"
-            if i == row_pac:
-                row[col_pac] = "."
-            new_grid.append(tuple(row))
+        for i, row in enumerate(state.grid):
+            if i != newX and i != row_pac:
+                new_grid.append(row)
+            else:
+                new_row = list(row)
+                if i == newX:
+                    new_row[newY] = "P"
+                if i == row_pac:
+                    new_row[col_pac] = "."
+                new_grid.append(tuple(new_row))
 
-        move = "Move to ({}, {})".format(action[0], action[1])
+        move = "Move to ({}, {})".format(newX, newY)
         if new_answer == 0:
             move += " Goal State"
 
-        # return State(state.shape, tuple(new_grid), new_answer, move, (action[0], action[1]))
-        return State(state.shape, tuple(new_grid), new_answer, move)
+        return State(state.shape, tuple(new_grid), new_answer, move, action)
 
     # Check for goal state
     def goal_test(self, state):
-        return True if (state.answer == 0) else False
+        return state.answer == 0
         
-
 
 ###############
 # State class #
 ###############
 class State:
 
-    def __init__(self, shape, grid, answer=None, move="Init"):
+    def __init__(self, shape, grid, answer=None, move="Init", pos_pacman=None):
         self.shape = shape
         self.answer = answer
         self.grid = grid
         self.move = move
-        # Add : pos_pacman=None in the argument of __init__()
-        # self.pos_pacman = pos_pacman
-        # for i in range(shape[0]):
-        #     for j in range(shape[1]):
-        #         if grid[i][j] == "P":
-        #             self.pos_pacman = (i, j)
-        #             break;
-        #     if self.pos_pacman != None:
-        #         break;
+        
+        # Strip : Begin
+        self.pos_pacman = pos_pacman;
+        for i, row in enumerate(grid):
+            for j, cell in enumerate(row):
+                if cell == 'P':
+                    self.pos_pacman = (i, j)
+                    break
+            if self.pos_pacman is not None:
+                break
+        # Strip : End
 
     def __str__(self):
         s = self.move + "\n"
@@ -132,19 +112,12 @@ class State:
         return hash(self.grid)
 
     def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-
-        if self.answer != other.answer:
-            return False
-        
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                if (self.grid[i][j] != other.grid[i][j]):
-                    return False
-        return True
+        return (isinstance(other, State) and self.grid == other.grid and self.answer == other.answer)
     # Strip : End
 
+    # Needs for "uniform_cost_search()"
+    # def __lt__(self, other):
+    #     pass
 
 def read_instance_file(filepath):
     with open(filepath) as fd:
@@ -169,43 +142,23 @@ if __name__ == "__main__":
 
     problem = Pacman(init_state)
 
-    """
-    ## Uninformed Search ##
-
-    breadth_first_tree_search(problem)
-    depth_first_tree_search(problem)
-    depth_first_graph_search(problem)
-    breadth_first_graph_search(problem)
-    best_first_graph_search(problem, f, display=False)
-    uniform_cost_search(problem, display=False)
-    depth_limited_search(problem, limit=50)
-    iterative_deepening_search(problem)
-
-    ## Informed Search ##
-
-    astar_search(problem, h=None, display=False)
-
-    ## Other Search ##
-
-    recursive_best_first_search(problem, h=None)
-    hill_climbing(problem)
-    exp_schedule(k=20, lam=0.005, limit=100)
-    simulated_annealing(problem, schedule=exp_schedule())
-    simulated_annealing_full(problem, schedule=exp_schedule())
-    """
-
     start_timer = time.perf_counter()
 
-    node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
+    # node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
+    #node, nb_explored, remaining_nodes = depth_first_graph_search(problem)
+    #node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
+    #node, nb_explored, remaining_nodes = iterative_deepening_search(problem)
+    #node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
+    node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
 
     end_timer = time.perf_counter()
 
-    path = node.path()
+    # path = node.path()
 
-    for node in path:
-        print(node.state)
+    # for node in path:
+    #     print(node.state)
 
-    # print("* Execution time:\t", str(end_timer - start_timer))
-    # print("* Path cost to goal:\t", node.depth, "moves")
-    # print("* # Nodes explored:\t", nb_explored)
-    # print("* Queue size at goal:\t",  remaining_nodes)
+    print("* Execution time:\t", str(end_timer - start_timer))
+    print("* Path cost to goal:\t", node.depth, "moves")
+    print("* # Nodes explored:\t", nb_explored)
+    print("* Queue size at goal:\t",  remaining_nodes)
