@@ -6,6 +6,7 @@ import time
 import sys
 
 from search import *
+from Extra.interface import show
 
 #################
 # Problem class #
@@ -144,21 +145,23 @@ if __name__ == "__main__":
 
     start_timer = time.perf_counter()
 
-    # node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
+    node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
     #node, nb_explored, remaining_nodes = depth_first_graph_search(problem)
     #node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
     #node, nb_explored, remaining_nodes = iterative_deepening_search(problem)
     #node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
-    node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
+    #node, nb_explored, remaining_nodes = depth_first_tree_search(problem)
 
     end_timer = time.perf_counter()
 
-    # path = node.path()
+    path = node.path()
+    path.reverse()
+    show(path[0])
 
     # for node in path:
     #     print(node.state)
 
-    print("* Execution time:\t", str(end_timer - start_timer))
-    print("* Path cost to goal:\t", node.depth, "moves")
-    print("* # Nodes explored:\t", nb_explored)
-    print("* Queue size at goal:\t",  remaining_nodes)
+    # print("* Execution time:\t", str(end_timer - start_timer))
+    # print("* Path cost to goal:\t", node.depth, "moves")
+    # print("* # Nodes explored:\t", nb_explored)
+    # print("* Queue size at goal:\t",  remaining_nodes)
