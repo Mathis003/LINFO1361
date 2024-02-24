@@ -155,11 +155,10 @@ if __name__ == "__main__":
     end_timer = time.perf_counter()
 
     path = node.path()
-    path.reverse()
-    show(path[0])
 
-    # for node in path:
-    #     print(node.state)
+    for node in path:
+        # print(node.state)
+        show(node)
 
     # print("* Execution time:\t", str(end_timer - start_timer))
     # print("* Path cost to goal:\t", node.depth, "moves")

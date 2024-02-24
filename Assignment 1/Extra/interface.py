@@ -18,14 +18,14 @@ def decode(state):
     
     return sizes, map
 
-WALL = pg.image.load("images/blue_stone.png")
-PACMOZ = pg.image.load("images/pacmoz.png")
+WALL = pg.image.load("Extra/images/blue_stone.png")
+PACMOZ = pg.image.load("Extra/images/pacmoz.png")
 
-PACPOW = pg.image.load("images/pacpow.png")
-PACMAN_LEFT = pg.image.load("images/pacman_left.png")
-PACMAN_RIGHT = pg.image.load("images/pacman_right.png")
-PACMAN_UP = pg.image.load("images/pacman_up.png")
-PACMAN_DOWN = pg.image.load("images/pacman_down.png")
+PACPOW = pg.image.load("Extra/images/pacpow.png")
+PACMAN_LEFT = pg.image.load("Extra/images/pacman_left.png")
+PACMAN_RIGHT = pg.image.load("Extra/images/pacman_right.png")
+PACMAN_UP = pg.image.load("Extra/images/pacman_up.png")
+PACMAN_DOWN = pg.image.load("Extra/images/pacman_down.png")
 
 class Viewer:
     """
