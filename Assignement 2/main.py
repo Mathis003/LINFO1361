@@ -31,6 +31,7 @@ def get_agents(args, display):
     
     return get_agent(0, args.white), get_agent(1, args.black)
 
+
 def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
     game = ShobuGame()
@@ -106,6 +107,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
     else:
         return 1, n_moves
 
+
 def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
     game = ShobuGame()
     state = game.initial
@@ -126,6 +128,7 @@ def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
     run = 1
     while run != -1 and display:
         run = update_ui(state)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Shobu game')

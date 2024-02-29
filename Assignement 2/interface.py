@@ -1,4 +1,3 @@
-
 import pygame
 from shobu import ShobuAction, ShobuState, ShobuGame
 from agent import Agent
@@ -22,7 +21,6 @@ HIGHLIGHT_COLOR     = (255, 0, 0)
 screen = None
 is_paused = False
 
-
 def init_pygame():
     global screen
     pygame.init()
@@ -38,14 +36,13 @@ def draw_board(top_left_corner, color_line, color_board):
 
 
 def draw_piece(board_index, piece_index, color):
-    
     if board_index < 0 or board_index > 3:
         raise Exception(f"Board index {board_index} is invalid")
     if piece_index < 0 or piece_index > 15:
         raise Exception(f"Piece index {piece_index} is invalid")
 
-    x = OFFSET_BOARD + (GAP_BOARD + SQUARE_SIZE * 4) * (board_index % 2) + SQUARE_SIZE * (piece_index % 4) + SQUARE_SIZE/2
-    y = OFFSET_BOARD + (GAP_BOARD + SQUARE_SIZE * 4) * (abs((board_index // 2) - 1)) + SQUARE_SIZE * (abs((piece_index // 4) - 3)) + SQUARE_SIZE/2
+    x = OFFSET_BOARD + (GAP_BOARD + SQUARE_SIZE * 4) * (board_index % 2) + SQUARE_SIZE * (piece_index % 4) + SQUARE_SIZE / 2
+    y = OFFSET_BOARD + (GAP_BOARD + SQUARE_SIZE * 4) * (abs((board_index // 2) - 1)) + SQUARE_SIZE * (abs((piece_index // 4) - 3)) + SQUARE_SIZE / 2
     pygame.draw.circle(screen, color, (x, y), PLAYER_RADIUS)
 
 
@@ -72,8 +69,8 @@ def highlight_square(board_index, square_index, color):
 def show_text(text: str, color=(0, 0, 0)):
     font = pygame.font.SysFont("Arial", 50)
     surface = font.render(text, True, color)
-    x = SCREEN_WIDTH/2 - surface.get_width()/2
-    y = SCREEN_HEIGHT/2 - surface.get_height()/2
+    x = (SCREEN_WIDTH - surface.get_width()) / 2
+    y = (SCREEN_HEIGHT - surface.get_height()) / 2
     screen.blit(surface, (x, y))
 
 
@@ -84,9 +81,10 @@ def convert_click_to_square_index(pos: tuple[int, int], board_index: tuple[int, 
     top_left_corner = (OFFSET_BOARD + (GAP_BOARD + SQUARE_SIZE * 4) * board_index[1], OFFSET_BOARD + (GAP_BOARD + SQUARE_SIZE * 4) * board_index[0])
     x = x - top_left_corner[0]
     y = y - top_left_corner[1]
+
     for i in range(4):
         for j in range(4):
-            if i * SQUARE_SIZE <= x <= (i+1) * SQUARE_SIZE and j * SQUARE_SIZE <= y <= (j+1) * SQUARE_SIZE:
+            if i * SQUARE_SIZE <= x <= (i + 1) * SQUARE_SIZE and j * SQUARE_SIZE <= y <= (j + 1) * SQUARE_SIZE:
                 return (j, i)
     return None
 
@@ -151,8 +149,6 @@ def get_human_move(state):
                 passive_board = board_idx
                 passive_board_id = board_id
                 passive_stone_id = piece_id
-
-
                 
         run = update_ui(state, text="Select passive stone")
         if run == -1:
@@ -213,6 +209,7 @@ def get_human_move(state):
                 active_board = board_idx
                 active_board_id = board_id
                 active_stone_id = piece_id
+
         run = update_ui(state, text="Select active stone", highlight=highlight_squares)
         if run == -1:
             return None
@@ -221,6 +218,7 @@ def get_human_move(state):
     highlight_squares.append((active_board, active_stone))
 
     return ShobuAction(passive_board_id, passive_stone_id, active_board_id, active_stone_id, direction, length)
+
 
 def update_ui(state: ShobuState, text: str = None, highlight: list = []):
     global is_paused
@@ -275,4 +273,3 @@ class HumanAgent(Agent):
 
     def play(self, state, remaining_time):
         return get_human_move(state)
-

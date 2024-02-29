@@ -1,5 +1,13 @@
 # LINFO1361-Shobu
 
+
+## Files to modify
+
+agent.py => Create our own agent
+
+
+
+
 ## Run the code
 You can run the code with the following command
 
