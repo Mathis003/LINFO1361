@@ -1,8 +1,6 @@
 from agent import Agent
 
 
-# TODO : Implement this class
-
 """
 An agent that uses the alpha-beta pruning algorithm to determine the best move.
 
@@ -54,7 +52,7 @@ class AlphaBetaAgent(Agent):
         bool: True if the search should be cut off, False otherwise.
     """
     def is_cutoff(self, state, depth):
-        return depth == 0 or self.game.is_terminal(state)
+        return depth == self.max_depth or self.game.is_terminal(state)
     
 
     """
@@ -67,19 +65,13 @@ class AlphaBetaAgent(Agent):
         float: The evaluated score of the state.
     """
     def eval(self, state):
-
-        if self.game.is_terminal(state):
-            return self.game.utility(state, self.player)
-        
-        nbWhites = nbBlacks = 4
-
+        min_pieces = [4, 4]
         for board in state.board:
-            nbWhites = min(nbWhites, len(board[0]))
-            nbBlacks = min(nbBlacks, len(board[1]))
+            for i in range(2):
+                min_pieces[i] = min(min_pieces[i], len(board[i]))
+        
+        return min_pieces[self.player] - min_pieces[1 - self.player]
 
-        score = nbWhites - nbBlacks
-
-        return score if self.player == 0 else - score
 
     """
     Implements the alpha-beta pruning algorithm to find the best action.
@@ -91,13 +83,7 @@ class AlphaBetaAgent(Agent):
         ShobuAction: The best action as determined by the alpha-beta algorithm.
     """
     def alpha_beta_search(self, state):
-
-        maxValue, action = self.max_value(state, - float("inf"), float("inf"), self.max_depth)
-
-        # For debugging purposes
-        # print(f"Max value: {maxValue}")
-        # print(f"Action: {action}")
-
+        _, action = self.max_value(state, - float("inf"), float("inf"), 0)
         return action
 
 
@@ -125,7 +111,9 @@ class AlphaBetaAgent(Agent):
         maxValue, bestMove = -float("inf"), None
         
         for action in self.game.actions(state):
-            currValue, _ = self.min_value(state, alpha, beta, depth - 1)
+
+            result_state = self.game.result(state, action)
+            currValue, _ = self.min_value(result_state, alpha, beta, depth + 1)
 
             if maxValue < currValue:
                 maxValue, bestMove = currValue, action
@@ -162,7 +150,9 @@ class AlphaBetaAgent(Agent):
         minValue, bestMove = float("inf"), None
         
         for action in self.game.actions(state):
-            currValue, _ = self.max_value(state, alpha, beta, depth - 1)
+            
+            result_state = self.game.result(state, action)
+            currValue, _ = self.max_value(result_state, alpha, beta, depth + 1)
             
             if currValue < minValue:
                 minValue, bestMove = currValue, action
