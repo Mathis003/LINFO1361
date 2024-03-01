@@ -1,5 +1,8 @@
 from agent import Agent
 
+
+# TODO : Implement this class
+
 """
 An agent that uses the alpha-beta pruning algorithm to determine the best move.
 
@@ -51,8 +54,7 @@ class AlphaBetaAgent(Agent):
         bool: True if the search should be cut off, False otherwise.
     """
     def is_cutoff(self, state, depth):
-        # TODO
-        return depth == 0 or state.is_terminal()
+        return depth == 0 or self.game.is_terminal(state)
     
 
     """
@@ -65,8 +67,19 @@ class AlphaBetaAgent(Agent):
         float: The evaluated score of the state.
     """
     def eval(self, state):
-        # TODO
-        return state.utility(self.player)
+        if self.game.is_terminal(state):
+            return self.game.utility(state, self.player)
+        
+        nbWhites, nbBlacks = 0, 0
+
+        for board in state.board:
+            nbWhites += len(board[0])
+            nbBlacks += len(board[1])
+        
+        WHITE = 0
+        if self.player == WHITE:
+            return nbWhites - nbBlacks
+        return nbBlacks - nbWhites
 
 
     """
@@ -80,12 +93,11 @@ class AlphaBetaAgent(Agent):
     """
     def alpha_beta_search(self, state):
 
-        # Launch the alpha-beta search from the state
         maxValue, action = self.max_value(state, - float("inf"), float("inf"), self.max_depth)
 
         # For debugging purposes
-        print(f"Max value: {maxValue}")
-        print(f"Action: {action}")
+        # print(f"Max value: {maxValue}")
+        # print(f"Action: {action}")
 
         return action
 
@@ -107,8 +119,23 @@ class AlphaBetaAgent(Agent):
             If the state is a terminal state or the depth limit is reached, the action will be None.
     """
     def max_value(self, state, alpha, beta, depth):
-        # TODO
-        pass
+
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+
+        maxValue, bestMove = -float("inf"), None
+        
+        for action in self.game.actions(state):
+            currValue, _ = self.min_value(state, alpha, beta, depth - 1)
+
+            if currValue > maxValue:
+                maxValue, bestMove = currValue, action
+                alpha = max(alpha, maxValue)
+
+            if maxValue >= beta:
+                return maxValue, bestMove
+        
+        return maxValue, bestMove
 
 
     """
@@ -129,5 +156,20 @@ class AlphaBetaAgent(Agent):
             If the state is a terminal state or the depth limit is reached, the action will be None.
     """
     def min_value(self, state, alpha, beta, depth):
-        # TODO
-        pass
+
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+
+        maxValue, bestMove = float("inf"), None
+        
+        for action in self.game.actions(state):
+            currValue, _ = self.max_value(state, alpha, beta, depth - 1)
+            
+            if currValue < maxValue:
+                maxValue, bestMove = currValue, action
+                beta = min(alpha, maxValue)
+
+            if maxValue <= alpha:
+                return maxValue, bestMove
+        
+        return maxValue, bestMove

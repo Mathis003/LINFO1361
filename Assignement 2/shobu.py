@@ -39,10 +39,12 @@ Attributes:
     utility (int): The utility score of the game, from the perspective of player 0. A score of 1
         indicates a win for player 0, -1 indicates a loss, and 0 typically indicates an ongoing
         game or a draw.
+        
     board (List[List[Set[int], Set[int]]]): A representation of the 4 boards in the game.
         Each board is represented as a list containing two sets: the first set contains positions
         of player 0's stones, and the second set contains positions of player 1's stones. The
         positions on each board are numbered from 0 to 15, starting from the bottom left corner.
+
     actions (List[ShobuAction]): A list of legal actions (`ShobuAction` objects) available to the player who is
         next to move, based on the current state.
     count_boring_actions (int): A counter that tracks the number of consecutive actions taken
