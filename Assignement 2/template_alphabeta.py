@@ -67,20 +67,19 @@ class AlphaBetaAgent(Agent):
         float: The evaluated score of the state.
     """
     def eval(self, state):
+
         if self.game.is_terminal(state):
             return self.game.utility(state, self.player)
         
-        nbWhites, nbBlacks = 0, 0
+        nbWhites = nbBlacks = 4
 
         for board in state.board:
-            nbWhites += len(board[0])
-            nbBlacks += len(board[1])
-        
-        WHITE = 0
-        if self.player == WHITE:
-            return nbWhites - nbBlacks
-        return nbBlacks - nbWhites
+            nbWhites = min(nbWhites, len(board[0]))
+            nbBlacks = min(nbBlacks, len(board[1]))
 
+        score = nbWhites - nbBlacks
+
+        return score if self.player == 0 else - score
 
     """
     Implements the alpha-beta pruning algorithm to find the best action.
@@ -128,12 +127,12 @@ class AlphaBetaAgent(Agent):
         for action in self.game.actions(state):
             currValue, _ = self.min_value(state, alpha, beta, depth - 1)
 
-            if currValue > maxValue:
+            if maxValue < currValue:
                 maxValue, bestMove = currValue, action
                 alpha = max(alpha, maxValue)
 
-            if maxValue >= beta:
-                return maxValue, bestMove
+            if beta <= alpha:
+                break
         
         return maxValue, bestMove
 
@@ -160,16 +159,16 @@ class AlphaBetaAgent(Agent):
         if self.is_cutoff(state, depth):
             return self.eval(state), None
 
-        maxValue, bestMove = float("inf"), None
+        minValue, bestMove = float("inf"), None
         
         for action in self.game.actions(state):
             currValue, _ = self.max_value(state, alpha, beta, depth - 1)
             
-            if currValue < maxValue:
-                maxValue, bestMove = currValue, action
-                beta = min(alpha, maxValue)
+            if currValue < minValue:
+                minValue, bestMove = currValue, action
+                beta = min(beta, minValue)
 
-            if maxValue <= alpha:
-                return maxValue, bestMove
+            if beta <= alpha:
+                break
         
-        return maxValue, bestMove
+        return minValue, bestMove
