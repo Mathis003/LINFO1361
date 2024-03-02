@@ -2,6 +2,7 @@ from agents.agent import Agent
 import random
 import math
 
+
 """
 Node Class
 
@@ -81,12 +82,17 @@ class UCTAgent(Agent):
         ShobuAction: The action leading to the best-perceived outcome based on UCT algorithm.
     """
     def uct(self, state):
+
         root = Node(None, state)
+
+        # Perform the UCT algorithm for a set number of iterations
         for _ in range(self.iteration):
             leaf = self.select(root)
             child = self.expand(leaf)
             result = self.simulate(child.state)
             self.back_propagate(result, child)
+
+        # Choose the action with the highest number of visits
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
 
@@ -103,8 +109,22 @@ class UCTAgent(Agent):
         Node: The selected leaf node.
     """
     def select(self, node):
-        # TODO
-        pass
+        
+        # If the node is a terminal state or has no children or hasn't be explored yet (N == 0), return the node
+        if self.game.is_terminal(node.state) or node.N == 0 or len(node.children) == 0:
+            return node
+        
+        # Select the child node with the highest UCB1 value
+        max_ucb = -1
+        next_node = None
+        for child_node in node.children.keys():
+            child_ucb = self.UCB1(child_node)
+            if max_ucb < child_ucb:
+                max_ucb = child_ucb
+                next_node = child_node
+
+        # Recursively select the next node
+        return self.select(next_node)
     
     
     """
@@ -122,8 +142,34 @@ class UCTAgent(Agent):
         Node: The newly created child node representing the state after an unexplored action. If the node is at a terminal state, the node itself is returned.
     """
     def expand(self, node):
-        # TODO
-        pass
+
+        # If the node is a terminal state, return the node
+        if self.game.is_terminal(node.state):
+            return node
+        
+        # Generate all possible actions from the current state
+        actions = self.game.actions(node.state)
+
+        unexplored_actions = []
+        for action in actions:
+            if action not in node.children.values():
+                unexplored_actions.append(action)
+        
+        action_random = random.choice(unexplored_actions)
+        new_state = self.game.result(node.state, action_random)
+        new_node = Node(node, new_state)
+        node.children[new_node] = action_random
+        return new_node
+
+        # For each unexplored action, create a new child node
+        # for action in actions:
+        #     if action not in node.children.values():
+        #         new_state = self.game.result(node.state, action)
+        #         new_node = Node(node, new_state)
+        #         node.children[new_node] = action
+        
+        # Select one of the new child nodes
+        # return random.choice(list(node.children.keys()))
 
 
     """
@@ -136,9 +182,19 @@ class UCTAgent(Agent):
         float: The utility value of the terminal state for the player to move.
     """
     def simulate(self, state):
-        # TODO
-        pass
+        
+        max_iter = 500
+        for _ in range(max_iter):
 
+            if self.game.is_terminal(state):
+                return self.game.utility(state, self.player)
+            
+            action = random.choice(self.game.actions(state))
+            state = self.game.result(state, action)
+        
+        # Return : ???
+        return 0
+    
 
     """
     Propagates the result of a simulation back up the tree, updating node statistics.
@@ -148,8 +204,10 @@ class UCTAgent(Agent):
         node (Node): The node to start backpropagation from.
     """
     def back_propagate(self, result, node):
-        # TODO
-        pass
+        while node.parent is not None:
+            node = node.parent
+            node.N += 1
+            node.U += result
 
 
     """
@@ -162,5 +220,5 @@ class UCTAgent(Agent):
         float: The UCB1 value.
     """
     def UCB1(self, node):
-        # TODO
-        pass
+        C = math.sqrt(2)
+        return node.U / node.N + C * math.sqrt(math.log(node.parent.N) / node.N) if node.N != 0 else float('inf')
