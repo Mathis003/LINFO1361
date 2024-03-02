@@ -22,7 +22,7 @@ class Agent:
         self.player = player
         self.game = game
     
-
+    
     """
     Determines the action the agent will take in the given game state.
 

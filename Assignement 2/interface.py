@@ -1,6 +1,5 @@
 import pygame
-from shobu import ShobuAction, ShobuState, ShobuGame
-from agent import Agent
+from shobu import ShobuState, ShobuGame
 
 
 SCREEN_WIDTH        = 800
@@ -127,99 +126,6 @@ def convert_click_to_position():
     return None
 
 
-def get_human_move(state):
-    highlight_squares = []
-
-    # get stone for passive move
-    passive_stone = None
-    passive_board = None
-    passive_board_id = None
-    passive_stone_id = None
-    print("Select passive stone")
-    while passive_stone is None and passive_board is None:
-        pos = convert_click_to_position()
-        if pos is not None:
-            board_idx, piece_idx = pos
-
-            board_id = (abs(board_idx[0] - 1)) * 2 + board_idx[1]
-            piece_id = (abs(piece_idx[0] - 3)) * 4 + piece_idx[1]
-
-            if (board_id, piece_id) in [(b, p) for b, p, _, _, _, _ in state.actions]:
-                passive_stone = piece_idx
-                passive_board = board_idx
-                passive_board_id = board_id
-                passive_stone_id = piece_id
-                
-        run = update_ui(state, text="Select passive stone")
-        if run == -1:
-            return None
-        if run == -2:
-            print("move reset")
-            return -2
-    highlight_squares.append((passive_board, passive_stone))
-
-    # get direction and length for passive move
-    direction = None
-    length = None
-    print("Select target square for passive move")
-    while direction is None and length is None:
-        pos = convert_click_to_position()
-        if pos is not None:
-            board_idx, piece_idx = pos
-
-            board_id = (abs(board_idx[0] - 1)) * 2 + board_idx[1]
-            piece_id = (abs(piece_idx[0] - 3)) * 4 + piece_idx[1]
-
-            dir = (piece_id - passive_stone_id)
-            le = 1
-            if abs(dir) in [1, 3, 4, 5]:
-                le = 1
-            elif abs(dir) in [2, 6, 8, 10]:
-                dir //= 2
-                le = 2
-            else:
-                continue
-            if board_id == passive_board_id and (passive_board_id, passive_stone_id, dir, le) in [(b, p, d, l) for b, p, _, _, d, l in state.actions]:
-                direction = dir
-                length = le
-        run = update_ui(state, text="Select target passive move", highlight=highlight_squares)
-        if run == -1:
-            return None
-        if run == -2:
-            print("move reset")
-            return -2
-    highlight_squares.append((board_idx, piece_idx))
-
-    # get stone for active move
-    active_stone = None 
-    active_board = None
-    active_board_id = None
-    active_stone_id = None
-    print("Select active stone")
-    while active_stone is None and active_board is None:
-        pos = convert_click_to_position()
-        if pos is not None:
-            board_idx, piece_idx = pos
-            
-            board_id = (abs(board_idx[0] - 1)) * 2 + board_idx[1]
-            piece_id = (abs(piece_idx[0] - 3)) * 4 + piece_idx[1]
-
-            if (passive_board_id, passive_stone_id, board_id, piece_id, direction, length) in state.actions:
-                active_stone = piece_idx
-                active_board = board_idx
-                active_board_id = board_id
-                active_stone_id = piece_id
-
-        run = update_ui(state, text="Select active stone", highlight=highlight_squares)
-        if run == -1:
-            return None
-        if run == -2:
-            return -2
-    highlight_squares.append((active_board, active_stone))
-
-    return ShobuAction(passive_board_id, passive_stone_id, active_board_id, active_stone_id, direction, length)
-
-
 def update_ui(state: ShobuState, text: str = None, highlight: list = []):
     global is_paused
     screen.fill(BACKGROUND_COLOR)
@@ -263,13 +169,3 @@ def update_ui(state: ShobuState, text: str = None, highlight: list = []):
     if is_paused or game.is_terminal(state):
         return 0
     return 1
-
-
-
-class HumanAgent(Agent):
-
-    def __init__(self, player):
-        self.player = player
-
-    def play(self, state, remaining_time):
-        return get_human_move(state)

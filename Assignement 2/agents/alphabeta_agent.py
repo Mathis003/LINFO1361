@@ -1,5 +1,4 @@
-from agent import Agent
-
+from agents.agent import Agent
 
 """
 An agent that uses the alpha-beta pruning algorithm to determine the best move.

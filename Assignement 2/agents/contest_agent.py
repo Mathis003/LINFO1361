@@ -1,5 +1,4 @@
-from agent import Agent
-import random
+from agents.agent import Agent
 
 
 """
@@ -24,5 +23,5 @@ class AI(Agent):
         ShobuAction: The chosen action.
     """
     def play(self, state, remaining_time):
-        # TODO (not sure if we need to implement this method here)
+        # TODO: Implement your BEST agent here
         pass

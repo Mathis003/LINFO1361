@@ -1,8 +1,9 @@
-from random_agent import RandomAgent
-from template_alphabeta import AlphaBetaAgent
-from template_uct import UCTAgent
-from template_contest import AI
-from shobu import ShobuAction, ShobuState, ShobuGame
+from agents.random_agent import RandomAgent
+from agents.human_agent import HumanAgent
+from agents.alphabeta_agent import AlphaBetaAgent
+from agents.uct_agent import UCTAgent
+from agents.contest_agent import AI
+from shobu import ShobuGame
 
 from logs import *
 from interface import *
@@ -18,9 +19,9 @@ def get_agents(args, display):
         elif agent_name == "random":
             return RandomAgent(player, ShobuGame())
         elif agent_name == "alphabeta":
-            return AlphaBetaAgent(player, ShobuGame(), 3)
+            return AlphaBetaAgent(player, ShobuGame(), 3) # 3 depth
         elif agent_name == "mcts":
-            return UCTAgent(player, ShobuGame())
+            return UCTAgent(player, ShobuGame(), 50) # 50 iterations
         elif agent_name == "agent":
             return AI(player, ShobuGame())
         else:
