@@ -93,7 +93,6 @@ class UCTAgent(Agent):
             self.back_propagate(result, child)
 
         # Choose the action with the highest number of visits
-        print(root.children)
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
 
@@ -111,10 +110,7 @@ class UCTAgent(Agent):
     """
     def select(self, node):
 
-        if not node.children:
-            return node
-        
-        if any(child.N == 0 for child in node.children.keys()) or self.game.is_terminal(node.state):
+        if self.game.is_terminal(node.state) or any(child.N == 0 for child in node.children.keys()):
             return node
         
         # Get the child node with the highest UCB1 value and select it for further exploration
@@ -149,9 +145,12 @@ class UCTAgent(Agent):
                 new_node = Node(node, new_state)
                 node.children[new_node] = action
         
-        # Return one of the new child nodes
-        return random.choice(list(node.children.keys()))
-
+        # Return one of the new unexplored child nodes
+        unexplored_nodes = [child for child in node.children.keys() if child.N == 0]
+        if unexplored_nodes:
+            return random.choice(unexplored_nodes)
+        return None
+    
 
     """
     Simulates a random play-through from the given state to a terminal state.
@@ -174,7 +173,7 @@ class UCTAgent(Agent):
             currentState = self.game.result(currentState, randomAction)
             iteration += 1
 
-        return self.game.utility(currentState, self.player)
+        return self.game.utility(currentState, state.to_move)
     
 
     """
@@ -185,12 +184,9 @@ class UCTAgent(Agent):
         node (Node): The node to start backpropagation from.
     """
     def back_propagate(self, result, node):
-
-        # Update the statistics of the node and all its ancestors
-        while node is not None:
-            node.N += 1
-            node.U += result
-            node = node.parent
+        node.N += 1
+        node.U += result
+        self.back_propagate(1 - result, node.parent)
 
 
     """
