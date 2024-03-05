@@ -109,11 +109,12 @@ class UCTAgent(Agent):
         Node: The selected leaf node.
     """
     def select(self, node):
-
-        if not node.children or self.game.is_terminal(node.state) or any(child.N == 0 for child in node.children.keys()):
+        
+        # or any(child.N == 0 for child in node.children.keys())
+        if not node.children or self.game.is_terminal(node.state):
             return node
         
-        return max(node.children, key=lambda c: self.UCB1(c))
+        return max(node.children, key=lambda x: self.UCB1(x))
 
     
     """
@@ -135,18 +136,17 @@ class UCTAgent(Agent):
         if self.game.is_terminal(node.state):
             return node
         
-        actions = self.game.actions(node.state)
+        unexplored_actions = [action for action in self.game.actions(node.state) if action not in node.children.values()]
+
+        if not unexplored_actions:
+            return node
         
-        for action in actions:
-            if action not in node.children.values():
-                new_state = self.game.result(node.state, action)
-                new_node = Node(node, new_state)
-                node.children[new_node] = action
-        
-        unexplored_nodes = [child for child in node.children.keys() if child.N == 0]
-        if unexplored_nodes:
-            return random.choice(unexplored_nodes)
-        return None
+        action = random.choice(unexplored_actions)
+        next_state = self.game.result(node.state, action)
+        child_node = Node(node, next_state)
+        node.children[child_node] = action
+
+        return child_node
     
 
     """
