@@ -110,10 +110,9 @@ class UCTAgent(Agent):
     """
     def select(self, node):
 
-        if self.game.is_terminal(node.state) or any(child.N == 0 for child in node.children.keys()):
+        if not node.children or self.game.is_terminal(node.state) or any(child.N == 0 for child in node.children.keys()):
             return node
         
-        # Get the child node with the highest UCB1 value and select it for further exploration
         return max(node.children, key=lambda c: self.UCB1(c))
 
     
@@ -138,14 +137,12 @@ class UCTAgent(Agent):
         
         actions = self.game.actions(node.state)
         
-        # For each unexplored action, create a new child node
         for action in actions:
             if action not in node.children.values():
                 new_state = self.game.result(node.state, action)
                 new_node = Node(node, new_state)
                 node.children[new_node] = action
         
-        # Return one of the new unexplored child nodes
         unexplored_nodes = [child for child in node.children.keys() if child.N == 0]
         if unexplored_nodes:
             return random.choice(unexplored_nodes)
@@ -184,6 +181,10 @@ class UCTAgent(Agent):
         node (Node): The node to start backpropagation from.
     """
     def back_propagate(self, result, node):
+
+        if node is None:
+            return
+        
         node.N += 1
         node.U += result
         self.back_propagate(1 - result, node.parent)
