@@ -1,4 +1,4 @@
-from agents.agent import Agent
+from agent import Agent
 import random
 import math
 
@@ -93,6 +93,7 @@ class UCTAgent(Agent):
             self.back_propagate(result, child)
 
         # Choose the action with the highest number of visits
+        print(root.children)
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
 
@@ -109,23 +110,16 @@ class UCTAgent(Agent):
         Node: The selected leaf node.
     """
     def select(self, node):
-        
-        # If the node is a terminal state or has no children or hasn't be explored yet (N == 0), return the node
-        if self.game.is_terminal(node.state) or node.N == 0 or len(node.children) == 0:
+
+        if not node.children:
             return node
         
-        # Select the child node with the highest UCB1 value
-        max_ucb = -1
-        next_node = None
-        for child_node in node.children.keys():
-            child_ucb = self.UCB1(child_node)
-            if max_ucb < child_ucb:
-                max_ucb = child_ucb
-                next_node = child_node
+        if any(child.N == 0 for child in node.children.keys()) or self.game.is_terminal(node.state):
+            return node
+        
+        # Get the child node with the highest UCB1 value and select it for further exploration
+        return max(node.children, key=lambda c: self.UCB1(c))
 
-        # Recursively select the next node
-        return self.select(next_node)
-    
     
     """
     Expands a node by adding a child node to the tree for an unexplored action.
@@ -143,33 +137,20 @@ class UCTAgent(Agent):
     """
     def expand(self, node):
 
-        # If the node is a terminal state, return the node
         if self.game.is_terminal(node.state):
             return node
         
-        # Generate all possible actions from the current state
         actions = self.game.actions(node.state)
-
-        unexplored_actions = []
+        
+        # For each unexplored action, create a new child node
         for action in actions:
             if action not in node.children.values():
-                unexplored_actions.append(action)
+                new_state = self.game.result(node.state, action)
+                new_node = Node(node, new_state)
+                node.children[new_node] = action
         
-        action_random = random.choice(unexplored_actions)
-        new_state = self.game.result(node.state, action_random)
-        new_node = Node(node, new_state)
-        node.children[new_node] = action_random
-        return new_node
-
-        # For each unexplored action, create a new child node
-        # for action in actions:
-        #     if action not in node.children.values():
-        #         new_state = self.game.result(node.state, action)
-        #         new_node = Node(node, new_state)
-        #         node.children[new_node] = action
-        
-        # Select one of the new child nodes
-        # return random.choice(list(node.children.keys()))
+        # Return one of the new child nodes
+        return random.choice(list(node.children.keys()))
 
 
     """
@@ -183,17 +164,17 @@ class UCTAgent(Agent):
     """
     def simulate(self, state):
         
-        max_iter = 500
-        for _ in range(max_iter):
+        MAX_ITERATION = 500
+        iteration = 0
+        currentState = state
 
-            if self.game.is_terminal(state):
-                return self.game.utility(state, self.player)
-            
-            action = random.choice(self.game.actions(state))
-            state = self.game.result(state, action)
-        
-        # Return : ???
-        return 0
+        while not self.game.is_terminal(currentState) and iteration < MAX_ITERATION:
+            available_actions = self.game.actions(currentState)
+            randomAction = random.choice(available_actions)
+            currentState = self.game.result(currentState, randomAction)
+            iteration += 1
+
+        return self.game.utility(currentState, self.player)
     
 
     """
@@ -204,10 +185,12 @@ class UCTAgent(Agent):
         node (Node): The node to start backpropagation from.
     """
     def back_propagate(self, result, node):
-        while node.parent is not None:
-            node = node.parent
+
+        # Update the statistics of the node and all its ancestors
+        while node is not None:
             node.N += 1
             node.U += result
+            node = node.parent
 
 
     """
@@ -220,5 +203,12 @@ class UCTAgent(Agent):
         float: The UCB1 value.
     """
     def UCB1(self, node):
+
+        if node.N == 0:
+            return float('inf')
+        
+        exploitation = node.U / node.N
+        exploration = math.sqrt(math.log(node.parent.N) / node.N)
         C = math.sqrt(2)
-        return node.U / node.N + C * math.sqrt(math.log(node.parent.N) / node.N) if node.N != 0 else float('inf')
+
+        return exploitation + C * exploration
