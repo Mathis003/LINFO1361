@@ -110,7 +110,6 @@ class UCTAgent(Agent):
     """
     def select(self, node):
         
-        # or any(child.N == 0 for child in node.children.keys())
         if not node.children or self.game.is_terminal(node.state):
             return node
         
@@ -186,8 +185,10 @@ class UCTAgent(Agent):
             return
         
         node.N += 1
-        node.U += result
-        self.back_propagate(1 - result, node.parent)
+        if result == 1:
+            node.U += result
+
+        self.back_propagate(-result, node.parent)
 
 
     """
