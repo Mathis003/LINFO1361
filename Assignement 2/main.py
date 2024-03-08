@@ -21,7 +21,7 @@ def get_agents(args, display):
         elif agent_name == "alphabeta":
             return AlphaBetaAgent(player, ShobuGame(), 3) # 3 depth
         elif agent_name == "mcts":
-            return UCTAgent(player, ShobuGame(), 50) # 50 iterations
+            return UCTAgent(player, ShobuGame(), 1000) # 1000 iterations
         elif agent_name == "agent":
             return AI(player, ShobuGame())
         else:

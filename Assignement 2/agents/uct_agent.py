@@ -84,6 +84,7 @@ class UCTAgent(Agent):
     def uct(self, state):
 
         root = Node(None, state)
+        root.children = { Node(root, self.game.result(root.state, action)): action for action in self.game.actions(root.state) }
 
         # Perform the UCT algorithm for a set number of iterations
         for _ in range(self.iteration):
@@ -99,7 +100,6 @@ class UCTAgent(Agent):
 
     """
     Selects a leaf node using the UCB1 formula to maximize exploration and exploitation.
-
     A node is considered a leaf if it has a potential child from which no simulation has yet been initiated or when the game is finished.
 
     Args:
@@ -110,18 +110,17 @@ class UCTAgent(Agent):
     """
     def select(self, node):
         
-        if not node.children or self.game.is_terminal(node.state):
+        if not node.children or any(child.N == 0 for child in node.children.keys()) or self.game.is_terminal(node.state):
             return node
         
-        return max(node.children, key=lambda x: self.UCB1(x))
+        return self.select(max(node.children, key=self.UCB1))
 
     
     """
     Expands a node by adding a child node to the tree for an unexplored action.
 
-    This function generates all possible actions from the current state represented by the node if they haven't been explored yet. 
-    For each unexplored action, a new child node is created, representing the state resulting from that action. The function then 
-    selects one of these new child nodes and returns it. If the node represents a terminal state it effectively returns the node itself, 
+    If no child has been initialized for this node, the function initializes a child node for each action and store them in the children dictionary.
+    The function then selects one of the unexplored child nodes and returns it. If the node represents a terminal state it effectively returns the node itself,
     indicating that the node cannot be expanded further.
 
     Args:
@@ -135,17 +134,15 @@ class UCTAgent(Agent):
         if self.game.is_terminal(node.state):
             return node
         
-        unexplored_actions = [action for action in self.game.actions(node.state) if action not in node.children.values()]
-
-        if not unexplored_actions:
-            return node
+        if not node.children:
+            node.children = { Node(node, self.game.result(node.state, action)): action for action in self.game.actions(node.state) }
+        else:
+            unexplored_action = [action for action in node.children.values() if action not in node.children.values()]
+            if unexplored_action:
+                random_action = random.choice(unexplored_action)
+                node.children[Node(node, self.game.result(node.state, random_action))] = random_action
         
-        action = random.choice(unexplored_actions)
-        next_state = self.game.result(node.state, action)
-        child_node = Node(node, next_state)
-        node.children[child_node] = action
-
-        return child_node
+        return random.choice(list(node.children.keys()))
     
 
     """
@@ -155,7 +152,7 @@ class UCTAgent(Agent):
         state (ShobuState): The state to simulate from.
 
     Returns:
-        float: The utility value of the terminal state for the player to move.
+        float: The utility value of the terminal state for the opponent of the player whose turn it is to play in that state.
     """
     def simulate(self, state):
         
@@ -169,7 +166,7 @@ class UCTAgent(Agent):
             currentState = self.game.result(currentState, randomAction)
             iteration += 1
 
-        return self.game.utility(currentState, state.to_move)
+        return -self.game.utility(currentState, state.to_move)
     
 
     """
@@ -180,15 +177,10 @@ class UCTAgent(Agent):
         node (Node): The node to start backpropagation from.
     """
     def back_propagate(self, result, node):
-
-        if node is None:
-            return
-        
-        node.N += 1
-        if result == 1:
-            node.U += result
-
-        self.back_propagate(-result, node.parent)
+        if node:
+            node.N += 1
+            node.U = node.U + result if result == 1 else node.U
+            self.back_propagate(-result, node.parent)
 
 
     """
@@ -198,7 +190,7 @@ class UCTAgent(Agent):
         node (Node): The node to calculate the UCB1 value for.
 
     Returns:
-        float: The UCB1 value.
+        float: The UCB1 value (infinity if the node has not been visited yet).
     """
     def UCB1(self, node):
 
