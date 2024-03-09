@@ -133,17 +133,15 @@ class UCTAgent(Agent):
 
         if self.game.is_terminal(node.state):
             return node
-        
-        if not node.children:
+            
+        if node.children == {}:
             node.children = { Node(node, self.game.result(node.state, action)): action for action in self.game.actions(node.state) }
-        else:
-            unexplored_action = [action for action in node.children.values() if action not in node.children.values()]
-            if unexplored_action:
-                random_action = random.choice(unexplored_action)
-                node.children[Node(node, self.game.result(node.state, random_action))] = random_action
         
-        return random.choice(list(node.children.keys()))
-    
+        child_node = random.choice([child for child in node.children.keys() if child.N == 0])
+        child_node.children = { Node(child_node, self.game.result(child_node.state, action)): action for action in self.game.actions(child_node.state) }
+
+        return child_node
+        
 
     """
     Simulates a random play-through from the given state to a terminal state.
@@ -196,6 +194,16 @@ class UCTAgent(Agent):
 
         if node.N == 0:
             return float('inf')
+        
+        # rewardsNode = 0
+        # for child in node.children.keys():
+        #     rewardsNode += child.U
+
+        # exploitation = rewardsNode / node.N
+        # exploration = math.sqrt(math.log(node.parent.N) / node.N)
+        # C = math.sqrt(2)
+
+        # return exploitation + C * exploration
         
         exploitation = node.U / node.N
         exploration = math.sqrt(math.log(node.parent.N) / node.N)
