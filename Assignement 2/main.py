@@ -11,6 +11,8 @@ from interface import *
 import argparse
 import time
 
+from matplotlib import pyplot as plt
+
 def get_agents(args, display):
 
     def get_agent(player, agent_name):
@@ -82,6 +84,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
                 n_moves += 1
 
+            # TODO : To change to see the game
+            display = False
             if display:
                 run = update_ui(state)
         
@@ -131,6 +135,27 @@ def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
         run = update_ui(state)
 
 
+# Ajout de fonction pour créer un graphique à barres
+def createBarGraph(percentages):
+    text = ['White','Black','Draw']
+    colors_list = ['Red','Orange', 'Purple']
+
+    # Create a bar graph to display the percentage of wins for the White and Black players
+    plt.figure(figsize=(8, 8))
+    graphBar = plt.bar(text, percentages, color=colors_list)
+    plt.title('Percentage of wins for the White and Black players')
+    
+    # Display the percentage on the top of the bars
+    for i, bar in enumerate(graphBar):
+        width = bar.get_width()
+        height = bar.get_height()
+        x, y = bar.get_xy()
+        plt.text(x + width / 2, y + height * 1.01, str(percentages[i]) + '%', ha='center', weight='bold')
+
+    # Save the graph in a file called percentage.png
+    plt.savefig('percentage.png')
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Shobu game')
     parser.add_argument('-w', '--white', type=str, default="random", help='White player ["random | human | alphabeta | mcts | agent"]')
@@ -162,9 +187,27 @@ if __name__ == "__main__":
             winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file)
             winners[winner] += 1
             total_moves.append(n_moves)
+            
         print(f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
     else:
         log_file = args.logs
         agent_white, agent_black = get_agents(args, args.display)
-        winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file, play_time=args.time)
-        print(f"Winner: {winner}, n_moves: {n_moves}")
+
+        NB_GAMES = 10000
+        NB_WHITE_WINS, NB_BLACK_WINS, NB_DRAWS = 0, 0, 0
+
+        for i in range(NB_GAMES):
+            winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file, play_time=args.time)
+            if winner == 0:
+                NB_WHITE_WINS += 1
+            elif winner == 1:
+                NB_BLACK_WINS += 1
+            else:
+                NB_DRAWS += 1
+        
+        PERC_NB_WHITE_WINS = (100 / NB_GAMES) * NB_WHITE_WINS
+        PERC_NB_BLACK_WINS = (100 / NB_GAMES) * NB_BLACK_WINS
+        PERC_NB_DRAWS = (100 / NB_GAMES) * NB_DRAWS
+        percentages = [PERC_NB_WHITE_WINS, PERC_NB_BLACK_WINS, PERC_NB_DRAWS]
+        
+        createBarGraph(percentages)

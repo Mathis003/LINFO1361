@@ -11,6 +11,17 @@ Attributes:
     - game (ShobuGame): The game the agent is playing.
 """
 class AI(Agent):
+    
+    """
+    Initializes a new AI agent with a specified player and game.
+
+    Args:
+        - player (int): The player id this agent represents.
+        - game (ShobuGame): The game the agent is playing.
+    """
+    def __init__(self, player, game):
+        super().__init__(player, game)
+
 
     """
     Determines the next action to take in the given state.
