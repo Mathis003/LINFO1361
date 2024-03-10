@@ -112,9 +112,9 @@ class UCTAgent(Agent):
     """
     def select(self, node):
         
-        if not node.children or any(child.N == 0 for child in node.children.keys()) or self.game.is_terminal(node.state):
+        if self.game.is_terminal(node.state) or [child for child in node.children.keys() if child.N == 0] != []:
             return node
-        
+
         return self.select(max(node.children, key=self.UCB1))
 
     
@@ -135,14 +135,25 @@ class UCTAgent(Agent):
 
         if self.game.is_terminal(node.state):
             return node
-            
-        if node.children == {}:
-            node.children = { Node(node, self.game.result(node.state, action)): action for action in self.game.actions(node.state) }
-        
-        child_node = random.choice([child for child in node.children.keys() if child.N == 0])
-        child_node.children = { Node(child_node, self.game.result(child_node.state, action)): action for action in self.game.actions(child_node.state) }
 
-        return child_node
+        # Keep track of the children that have NOT been visited yet
+        childrenNotVisited = [child for child in node.children.keys() if child.N == 0]
+        if childrenNotVisited == []:
+            # Initialize a new child node with a random action
+            available_actions = self.game.actions(node.state)
+            action = random.choice(available_actions)
+            newState = self.game.result(node.state, action)
+            childNode = Node(node, newState)
+        else:
+            # Select a random child node that has not been visited yet
+            childNode = random.choice(childrenNotVisited)
+            action = node.children[childNode]
+        
+        # Initialize all the children of the child node
+        node.children[childNode] = action
+        childNode.children = { Node(childNode, self.game.result(childNode.state, action)): action for action in self.game.actions(childNode.state) }
+
+        return childNode
         
 
     """
@@ -157,16 +168,17 @@ class UCTAgent(Agent):
     def simulate(self, state):
         
         MAX_ITERATION = 500
-        iteration = 0
-        currentState = state
+        currIteration = 0
+        opponent_player = 1 - state.to_move
 
-        while not self.game.is_terminal(currentState) and iteration < MAX_ITERATION:
-            available_actions = self.game.actions(currentState)
-            randomAction = random.choice(available_actions)
-            currentState = self.game.result(currentState, randomAction)
-            iteration += 1
+        # Simulate a random play-through from the given state to a terminal state
+        while not self.game.is_terminal(state) and currIteration < MAX_ITERATION:
+            available_actions = self.game.actions(state)
+            random_action = random.choice(available_actions)
+            state = self.game.result(state, random_action)
+            currIteration += 1
 
-        return -self.game.utility(currentState, state.to_move)
+        return self.game.utility(state, opponent_player)
     
 
     """
@@ -184,7 +196,8 @@ class UCTAgent(Agent):
     def back_propagate(self, result, node):
         if node:
             node.N += 1
-            node.U = node.U + result if result == 1 else node.U
+            if result == 1:
+                node.U += 1
             self.back_propagate(-result, node.parent)
 
 
@@ -198,21 +211,13 @@ class UCTAgent(Agent):
         float: The UCB1 value of the node. Returns infinity if the node has not been visited yet.
     """
     def UCB1(self, node):
-
+        
+        # If the node has not been visited yet
         if node.N == 0:
             return float('inf')
         
-        # rewardsNode = 0
-        # for child in node.children.keys():
-        #     rewardsNode += child.U
-
-        # exploitation = rewardsNode / node.N
-        # exploration = math.sqrt(math.log(node.parent.N) / node.N)
-        # C = math.sqrt(2)
-
-        # return exploitation + C * exploration
-        
-        exploitation = node.parent.U / node.N
+        # Calculate the UCB1 value for the node (Tradeoff between exploitation and exploration)
+        exploitation = node.U / node.N
         exploration = math.sqrt(math.log(node.parent.N) / node.N)
         C = math.sqrt(2)
 
