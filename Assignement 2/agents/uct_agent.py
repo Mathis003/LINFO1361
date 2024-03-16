@@ -1,4 +1,5 @@
 from agents.agent import Agent
+from agents.alphabeta_agent import AlphaBetaAgent
 import random
 import math
 
@@ -11,7 +12,7 @@ A node in the MCTS tree.
 Attributes:
     - parent (Node): The parent node of this node.
     - state (ShobuState): The game state represented by this node.
-    - U (int): The total reward of the node. 
+    - U (int): The total reward of the node.
     - N (int): The number of times the node has been visited.
     - children (dict[Node, ShobuAction]): A dictionary mapping child nodes to their corresponding actions that lead to the state they represent.
 """
@@ -101,7 +102,7 @@ class UCTAgent(Agent):
     """
     Selects a leaf node using the UCB1 formula to maximize exploration and exploitation.
     The function recursively selects the children of the node that maximise the UCB1 score, exploring the most promising 
-    path in the game tree. It stops when a leaf is found and returns it. A leaf is either a node in a terminal state, 
+    path in the game tree. It stops when a leaf is found and returns it. A leaf is either a node in a terminal state,
     or a node with a child for which no simulation has yet been performed.
 
     Args:
@@ -166,7 +167,7 @@ class UCTAgent(Agent):
         The utility value of the resulting terminal state in the point of view of the opponent in the original state.
     """
     def simulate(self, state):
-        
+                
         MAX_ITERATION = 500
         currIteration = 0
         opponent_player = 1 - state.to_move

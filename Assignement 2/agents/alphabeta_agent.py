@@ -37,6 +37,7 @@ class AlphaBetaAgent(Agent):
         ShobuAction: The action determined to be the best by the alpha-beta algorithm.
     """
     def play(self, state, remaining_time):
+        self.total_nodes_generated = 0
         return self.alpha_beta_search(state)
     
 
@@ -71,7 +72,6 @@ class AlphaBetaAgent(Agent):
         
         return min_pieces[self.player] - min_pieces[1 - self.player]
 
-
     """
     Implements the alpha-beta pruning algorithm to find the best action.
 
@@ -84,7 +84,6 @@ class AlphaBetaAgent(Agent):
     def alpha_beta_search(self, state):
         _, action = self.max_value(state, - float("inf"), float("inf"), 0)
         return action
-
 
     """
     Computes the maximum achievable value for the current player at a given state using the alpha-beta pruning.
@@ -110,7 +109,7 @@ class AlphaBetaAgent(Agent):
         maxValue, bestMove = -float("inf"), None
         
         for action in self.game.actions(state):
-
+            
             result_state = self.game.result(state, action)
             currValue, _ = self.min_value(result_state, alpha, beta, depth + 1)
 
@@ -120,7 +119,7 @@ class AlphaBetaAgent(Agent):
 
             if beta <= alpha:
                 break
-        
+
         return maxValue, bestMove
 
 

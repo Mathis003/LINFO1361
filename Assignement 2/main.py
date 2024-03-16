@@ -10,6 +10,7 @@ from interface import *
 
 import argparse
 import time
+import random
 
 from matplotlib import pyplot as plt
 
@@ -21,9 +22,9 @@ def get_agents(args, display):
         elif agent_name == "random":
             return RandomAgent(player, ShobuGame())
         elif agent_name == "alphabeta":
-            return AlphaBetaAgent(player, ShobuGame(), 3) # 3 depth
+            return AlphaBetaAgent(player, ShobuGame(), 4) # 3 depth
         elif agent_name == "mcts":
-            return UCTAgent(player, ShobuGame(), 200) # 500 iterations
+            return UCTAgent(player, ShobuGame(), 50) # 500 iterations
         elif agent_name == "agent":
             return AI(player, ShobuGame())
         else:
@@ -35,10 +36,59 @@ def get_agents(args, display):
     return get_agent(0, args.white), get_agent(1, args.black)
 
 
+"""
+Estimates the average branching factor of the game tree by simulating a number of games.
+
+Args:
+    game (ShobuGame): The game instance to simulate.
+    num_simulations (int): The number of games to simulate.
+
+Returns:
+    float: The estimated average branching factor of the game tree.
+"""
+def calculate_branching_factor(game, num_simulations=1000):
+
+    # Initialize the state and the branching factor
+    MAX_TURNS = 500
+    estimated_branching_factor = 0
+    init_state = game.initial
+    state = init_state
+
+    # Simulate a number of games to estimate the average branching factor
+    for _ in range(num_simulations):
+        
+        # Reset the number of turns and the branching factor
+        nb_turns = 0
+        branching_factor = 0
+
+        # Simulate a game until it reaches a terminal state
+        while not game.is_terminal(state) and nb_turns < MAX_TURNS:
+            nb_turns += 1
+            possible_actions = game.actions(state)
+            branching_factor += len(possible_actions)
+            action = random.choice(possible_actions)
+            state = game.result(state, action)
+
+        # print(f"Current branching factor: {branching_factor / nb_turns}")
+
+        # Add the current branching factor to the estimated one
+        estimated_branching_factor += branching_factor / nb_turns
+
+        # Reset the state to the initial state
+        state = init_state
+
+    # Return the average branching factor over all simulations
+    return estimated_branching_factor / num_simulations
+
+
 def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
     game = ShobuGame()
     state = game.initial
+
+    # Get the average branching factor of the game tree
+    branching_factor = calculate_branching_factor(game, 100000)
+    print("Average branching factor: ", branching_factor)
 
     run = 1
     logs = []
@@ -85,7 +135,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                 n_moves += 1
 
             # TODO : To change to see the game
-            display = False
+            # display = False
             if display:
                 run = update_ui(state)
         
@@ -153,7 +203,7 @@ def createBarGraph(percentages):
         plt.text(x + width / 2, y + height * 1.01, str(percentages[i]) + '%', ha='center', weight='bold')
 
     # Save the graph in a file called percentage.png
-    plt.savefig('percentage.png')
+    plt.savefig('percentage-MCTS_vs_Random.png')
 
 
 if __name__ == "__main__":
@@ -193,7 +243,7 @@ if __name__ == "__main__":
         log_file = args.logs
         agent_white, agent_black = get_agents(args, args.display)
 
-        NB_GAMES = 10000
+        NB_GAMES = 10
         NB_WHITE_WINS, NB_BLACK_WINS, NB_DRAWS = 0, 0, 0
 
         for i in range(NB_GAMES):
