@@ -22,7 +22,7 @@ def get_agents(args, display):
         elif agent_name == "random":
             return RandomAgent(player, ShobuGame())
         elif agent_name == "alphabeta":
-            return AlphaBetaAgent(player, ShobuGame(), 4) # 3 depth
+            return AlphaBetaAgent(player, ShobuGame(), 3) # 3 depth
         elif agent_name == "mcts":
             return UCTAgent(player, ShobuGame(), 50) # 500 iterations
         elif agent_name == "agent":
@@ -87,8 +87,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
     state = game.initial
 
     # Get the average branching factor of the game tree
-    branching_factor = calculate_branching_factor(game, 100000)
-    print("Average branching factor: ", branching_factor)
+    # branching_factor = calculate_branching_factor(game, 100000)
+    # print("Average branching factor: ", branching_factor)
 
     run = 1
     logs = []
@@ -134,7 +134,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
                 n_moves += 1
 
-            # TODO : To change to see the game
+            # TODO : To change to hide/see the game
             # display = False
             if display:
                 run = update_ui(state)
