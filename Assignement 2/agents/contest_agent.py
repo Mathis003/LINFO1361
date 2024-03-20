@@ -1,191 +1,13 @@
 from agents.agent import Agent
 import random
 import math
+from tensorflow.keras.models import load_model
+import numpy as np
 
+MODEL_PATH = "shobu_winner_prediction_model.h5"
 
-"""
-An agent that uses the alpha-beta pruning algorithm to determine the best move.
-
-This agent extends the base Agent class, providing an implementation of the play
-method that utilizes the alpha-beta pruning technique to make decisions more efficiently.
-
-Attributes:
-    max_depth (int): The maximum depth the search algorithm will explore.
-"""
-class AlphaBetaAgent(Agent):
-
-    """
-    Initializes an AlphaBetaAgent instance with a specified player, game, and maximum search depth.
-
-    Args:
-        - player (int): The player ID this agent represents (0 or 1).
-        - game (ShobuGame): The Shobu game instance the agent will play on.
-        - max_depth (int): The maximum depth of the search tree.
-    """
-    def __init__(self, player, game, max_depth):
-        super().__init__(player, game)
-        self.max_depth = max_depth
-
-
-    """
-    Determines the best action by applying the alpha-beta pruning algorithm.
-
-    Overrides the play method in the base class.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - remaining_time (float): The remaining time in seconds that the agent has to make a decision.
-
-    Returns:
-        ShobuAction: The action determined to be the best by the alpha-beta algorithm.
-    """
-    def play(self, state, remaining_time):
-        return self.alpha_beta_search(state)
-    
-
-    """
-    Determines if the search should be cut off at the current depth.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - depth (int): The current depth in the search tree.
-
-    Returns:
-        bool: True if the search should be cut off, False otherwise.
-    """
-    def is_cutoff(self, state, depth):
-        return depth == self.max_depth or self.game.is_terminal(state)
-    
-
-    """
-    Evaluates the given state and returns a score from the perspective of the agent's player.
-
-    Args:
-        state (ShobuState): The game state to evaluate.
-
-    Returns:
-        float: The evaluated score of the state.
-    """
-    def eval(self, state):
-        min_pieces = [4, 4]
-        for board in state.board:
-            for i in range(2):
-                min_pieces[i] = min(min_pieces[i], len(board[i]))
-        
-        return min_pieces[self.player] - min_pieces[1 - self.player]
-
-
-    """
-    Implements the alpha-beta pruning algorithm to find the best action.
-
-    Args:
-        state (ShobuState): The current game state.
-
-    Returns:
-        Utility: The utility of the best terminal state found.
-    """
-    def alpha_beta_search(self, state):
-        utility, _ = self.max_value(state, - float("inf"), float("inf"), 0)
-        return utility
-
-
-    """
-    Computes the maximum achievable value for the current player at a given state using the alpha-beta pruning.
-
-    This method recursively explores all possible actions from the current state to find the one that maximizes
-    the player's score, pruning branches that cannot possibly affect the final decision.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - alpha (float): The current alpha value, representing the minimum score that the maximizing player is assured of.
-        - beta (float): The current beta value, representing the maximum score that the minimizing player is assured of.
-        - depth (int): The current depth in the search tree.
-
-    Returns:
-        tuple: A tuple containing the best value achievable from this state and the action that leads to this value.
-            If the state is a terminal state or the depth limit is reached, the action will be None.
-    """
-    def max_value(self, state, alpha, beta, depth):
-
-        if self.is_cutoff(state, depth):
-            return self.eval(state), None
-
-        maxValue, bestMove = -float("inf"), None
-        
-        for action in self.game.actions(state):
-
-            result_state = self.game.result(state, action)
-            currValue, _ = self.min_value(result_state, alpha, beta, depth + 1)
-
-            if maxValue < currValue:
-                maxValue, bestMove = currValue, action
-                alpha = max(alpha, maxValue)
-
-            if beta <= alpha:
-                break
-        
-        return maxValue, bestMove
-
-
-    """
-    Computes the minimum achievable value for the opposing player at a given state using the alpha-beta pruning.
-
-    Similar to max_value, this method recursively explores all possible actions from the current state to find
-    the one that minimizes the opponent's score, again using alpha-beta pruning to cut off branches that won't
-    affect the outcome.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - alpha (float): The current alpha value, representing the minimum score that the maximizing player is assured of.
-        - beta (float): The current beta value, representing the maximum score that the minimizing player is assured of.
-        - depth (int): The current depth in the search tree.
-
-    Returns:
-        tuple: A tuple containing the best value achievable from this state for the opponent and the action that leads to this value.
-            If the state is a terminal state or the depth limit is reached, the action will be None.
-    """
-    def min_value(self, state, alpha, beta, depth):
-
-        if self.is_cutoff(state, depth):
-            return self.eval(state), None
-
-        minValue, bestMove = float("inf"), None
-        
-        for action in self.game.actions(state):
-            
-            result_state = self.game.result(state, action)
-            currValue, _ = self.max_value(result_state, alpha, beta, depth + 1)
-            
-            if currValue < minValue:
-                minValue, bestMove = currValue, action
-                beta = min(beta, minValue)
-
-            if beta <= alpha:
-                break
-        
-        return minValue, bestMove
-
-"""
-Node Class
-
-A node in the MCTS tree.
-
-Attributes:
-    - parent (Node): The parent node of this node.
-    - state (ShobuState): The game state represented by this node.
-    - U (int): The total reward of the node. 
-    - N (int): The number of times the node has been visited.
-    - children (dict[Node, ShobuAction]): A dictionary mapping child nodes to their corresponding actions that lead to the state they represent.
-"""
 class Node:
     
-    """
-    Initializes a new Node object.
-
-    Args:
-        - parent (Node): The parent node of this node.
-        - state (ShobuState): The game state represented by this node.
-    """
     def __init__(self, parent, state):
         self.parent = parent
         self.state = state
@@ -194,58 +16,34 @@ class Node:
         self.children = {}
 
 
-"""
-An agent that plays following your algorithm.
-
-This agent extends the base Agent class, providing an implementation your agent.
-
-Attributes:
-    - player (int): The player id this agent represents.
-    - game (ShobuGame): The game the agent is playing.
-"""
 class AI(Agent):
     
-    """
-    Initializes a new AI agent with a specified player and game.
-
-    Args:
-        - player (int): The player id this agent represents.
-        - game (ShobuGame): The game the agent is playing.
-    """
     def __init__(self, player, game):
         super().__init__(player, game)
+        self.machine_learning_model = load_model(MODEL_PATH)
+        self.turn = 0
 
 
-    """
-    Determines the next action to take in the given state.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - remaining_time (float): The remaining time in seconds that the agent has to make a decision.
-
-    Returns:
-        ShobuAction: The chosen action.
-    """
     def play(self, state, remaining_time):
-        self.uct(state)
+        self.turn += 1
+        return self.uct(state)
+    
+    #################################
+    #### MONTE-CARLO TREE SEARCH ####
+    #################################
 
-
-    """
-    Executes the UCT algorithm to find the best action from the current state.
-
-    Args:
-        state (ShobuState): The current state of the game.
-
-    Returns:
-        ShobuAction: The action leading to the best-perceived outcome based on UCT algorithm.
-    """
     def uct(self, state):
 
         root = Node(None, state)
         root.children = { Node(root, self.game.result(root.state, action)): action for action in self.game.actions(root.state) }
 
         # Perform the UCT algorithm for a set number of iterations
-        for _ in range(1):
+        if self.turn < 10:
+            NB_ITERATIONS = 100
+        else:
+            NB_ITERATIONS = 1000
+
+        for _ in range(NB_ITERATIONS):
             leaf = self.select(root)
             child = self.expand(leaf)
             result = self.simulate(child.state)
@@ -256,18 +54,6 @@ class AI(Agent):
         return root.children.get(max_state)
 
 
-    """
-    Selects a leaf node using the UCB1 formula to maximize exploration and exploitation.
-    The function recursively selects the children of the node that maximise the UCB1 score, exploring the most promising 
-    path in the game tree. It stops when a leaf is found and returns it. A leaf is either a node in a terminal state, 
-    or a node with a child for which no simulation has yet been performed.
-
-    Args:
-        node (Node): The node to select from.
-
-    Returns:
-        Node: The selected leaf node.
-    """
     def select(self, node):
         
         if self.game.is_terminal(node.state) or [child for child in node.children.keys() if child.N == 0] != []:
@@ -275,22 +61,9 @@ class AI(Agent):
 
         return self.select(max(node.children, key=self.UCB1))
 
-    
-    """
-    Expands a node by adding a child node to the tree for an unexplored action.
-
-    The function returns one of the children of the node for which no simulation has yet been performed. 
-    In addition, the function must initialize all the children of that child node in the child's "children" dictionary. 
-    If the node is in a terminal state, the function returns itself, indicating that the node can no longer be expanded.
-
-    Args:
-        node (Node): The node to expand. This node represents the current state from which we want to explore possible actions.
-
-    Returns:
-        Node: The child node selected. If the node is at a terminal state, the node itself is returned.
-    """
+ 
     def expand(self, node):
-        
+
         if self.game.is_terminal(node.state):
             return node
 
@@ -312,66 +85,77 @@ class AI(Agent):
         childNode.children = { Node(childNode, self.game.result(childNode.state, action)): action for action in self.game.actions(childNode.state) }
 
         return childNode
-        
+ 
 
-    """
-    Simulates a random play-through from the given state to a terminal state.
+    def simulateRandom(self, state):
+                
+        MAX_ITERATION = 500
+        currIteration = 0
+        opponent_player = 1 - state.to_move
 
-    Args:
-        state (ShobuState): The state to simulate from.
+        # Simulate a random play-through from the given state to a terminal state
+        while not self.game.is_terminal(state) and currIteration < MAX_ITERATION:
+            available_actions = self.game.actions(state)
+            random_action = random.choice(available_actions)
+            state = self.game.result(state, random_action)
+            currIteration += 1
 
-    Returns:
-        The utility value of the resulting terminal state in the point of view of the opponent in the original state.
-    """
+        return self.game.utility(state, opponent_player)
+    
+    """ With Machine Learning Model """
     def simulate(self, state):
 
-        alphaBetaAgent = AlphaBetaAgent(state.to_move, self.game, 3)
-        utility = alphaBetaAgent.play(state, 100)
-        return -utility
+        if self.turn < 10:
+            return self.simulateRandom(state)
+
+        opponent_player = 1 - state.to_move
+
+        board = np.zeros((8, 8))
+
+        for i in range(2):
+            for pos in state.board[0][i]:
+                player = 1 if i == 0 else -1
+                board[pos // 4][pos % 4] = player
+
+        for i in range(2):
+            for pos in state.board[1][i]:
+                player = 1 if i == 0 else -1
+                board[pos // 4][4 + pos % 4] = player
         
-        # MAX_ITERATION = 500
-        # currIteration = 0
-        # opponent_player = 1 - state.to_move
+        for i in range(2):
+            for pos in state.board[2][i]:
+                player = 1 if i == 0 else -1
+                board[4 + pos // 4][pos % 4] = player
 
-        # # Simulate a random play-through from the given state to a terminal state
-        # while not self.game.is_terminal(state) and currIteration < MAX_ITERATION:
-        #     available_actions = self.game.actions(state)
-        #     random_action = random.choice(available_actions)
-        #     state = self.game.result(state, random_action)
-        #     currIteration += 1
+        for i in range(2):
+            for pos in state.board[2][i]:
+                player = 1 if i == 0 else -1
+                board[4 + pos // 4][4 + pos % 4] = player
+        
+        board = board.reshape(1, 8, 8, 1)
 
-        # return self.game.utility(state, opponent_player)
+        predicted_winner = self.machine_learning_model.predict(board)[0][0]
+
+        print(predicted_winner)
+
+        # predicted_winner is the probability for the black player to win
+        if opponent_player == 1:
+            return predicted_winner
+        else:
+            return 1 - predicted_winner
     
-
-    """
-    Propagates the result of a simulation back up the tree, updating node statistics.
-
-    This method is responsible for updating the statistics for each node according to the result of the simulation. 
-    It recursively updates the U (utility) and N (number of visits) values for each node on the path from the given 
-    node to the root. The utility of a node is only updated if it is a node that must contain the win rate of the 
-    player who won the simulation, otherwise the utility is not modified.
-
-    Args:
-        result (float): The result of the simulation.
-        node (Node): The node to start backpropagation from.
-    """
     def back_propagate(self, result, node):
         if node:
             node.N += 1
-            if result == 1:
-                node.U += 1
-            self.back_propagate(-result, node.parent)
+            if self.turn < 10:
+                if result == 1:
+                    node.U += 1
+                self.back_propagate(-result, node.parent)
+            else:
+                node.U += result
+                self.back_propagate(1 - result, node.parent)
 
 
-    """
-    Calculates the UCB1 value for a given node.
-
-    Args:
-        node (Node): The node to calculate the UCB1 value for.
-
-    Returns:
-        float: The UCB1 value of the node. Returns infinity if the node has not been visited yet.
-    """
     def UCB1(self, node):
         
         # If the node has not been visited yet
@@ -384,3 +168,108 @@ class AI(Agent):
         C = math.sqrt(2)
 
         return exploitation + C * exploration
+    
+    ######################################
+    #### ALPHA-BETA PRUNING ALGORITHM ####
+    ######################################
+
+    def alpha_beta_search(self, state):
+        MAX_DEPTH = 3
+        _, action = self.minimax(state, True, -float("inf"), float("inf"), MAX_DEPTH)
+        return action
+
+    def score_pieces(self, state):
+        nb_pieces = [0, 0]
+        for board in state.board:
+            for i in range(2):
+                nb_pieces[i] += len(board[i])
+        
+        return nb_pieces[self.player] - nb_pieces[1 - self.player]
+    
+    def score_position_pieces(self, state):
+
+        # Si pierres connectées, score += 1
+        scores = [0, 0]
+        for board in state.board:
+            for i in range(2):
+                board_list = list(board[i])
+                for j in range(len(board_list)):
+                    pos_j = board_list[j]
+                    for k in range(len(board_list)):
+                        pos_k = board_list[k]
+                        if pos_j == pos_k + 1 or pos_j == pos_k - 1 or pos_j == pos_k + 4 or pos_j == pos_k - 4:
+                            scores[i] += 1
+
+        # Si pierres au centre du plateau, score += 2
+        for board in state.board:
+            for i in range(2):
+                board_list = list(board[i])
+                for j in range(len(board_list)):
+                    pos_j = board_list[j]
+                    if pos_j == 5 or pos_j == 6 or pos_j == 9 or pos_j == 10:
+                        scores[i] += 2
+
+        # Si pierres a x possibilité de mouvement, score += factor * x
+        factor = 1
+        scores[self.player] = factor * len(self.game.compute_actions(state.board, self.player))
+        scores[1 - self.player] = factor * len(self.game.compute_actions(state.board, 1 - self.player))
+
+        return scores[self.player] - scores[1 - self.player]
+    
+    def eval(self, state):
+
+        # Heuristics
+        score_nb_pieces = self.score_pieces(state)
+        score_position_pieces = self.score_position_pieces(state)
+
+        # Coefficients for the heuristics
+        a = 0.2
+        b = 0.8
+
+        total_score = a * score_nb_pieces + b * score_position_pieces
+        return total_score
+    
+
+    def is_cutoff(self, state, depth):
+        return depth == 0 or self.game.is_terminal(state)
+
+
+    def minimax(self, state, MAXIMIZING_PLAYER, alpha, beta, depth):
+        bestMove = None
+
+        if self.is_cutoff(state, depth):
+            return self.eval(state), bestMove
+
+        if MAXIMIZING_PLAYER:
+            maxValue = -float("inf")
+
+            for action in self.game.actions(state):
+                
+                result_state = self.game.result(state, action)
+                currValue, _ = self.minimax(result_state, False, alpha, beta, depth - 1)
+
+                if maxValue < currValue:
+                    maxValue, bestMove = currValue, action
+                    alpha = max(alpha, maxValue)
+
+                if beta <= alpha:
+                    break
+
+            return maxValue, bestMove
+        
+        else:
+            minValue = float("inf")
+
+            for action in self.game.actions(state):
+                
+                result_state = self.game.result(state, action)
+                currValue, _ = self.minimax(result_state, True, alpha, beta, depth - 1)
+                
+                if currValue < minValue:
+                    minValue, bestMove = currValue, action
+                    beta = min(beta, minValue)
+
+                if beta <= alpha:
+                    break
+            
+            return minValue, bestMove
