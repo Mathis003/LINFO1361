@@ -1,248 +1,112 @@
 from agents.agent import Agent
-import random
-import math
-from tensorflow.keras.models import load_model
-import numpy as np
-
-MODEL_PATH = "shobu_winner_prediction_model.h5"
-
-class Node:
-    
-    def __init__(self, parent, state):
-        self.parent = parent
-        self.state = state
-        self.U = 0
-        self.N = 0
-        self.children = {}
-
 
 class AI(Agent):
     
     def __init__(self, player, game):
         super().__init__(player, game)
-        self.machine_learning_model = load_model(MODEL_PATH)
-        self.turn = 0
+        self.max_depth = 3
+        self.explored = {}
 
 
     def play(self, state, remaining_time):
-        self.turn += 1
-        return self.uct(state)
+        return self.alpha_beta_search(state)
     
-    #################################
-    #### MONTE-CARLO TREE SEARCH ####
-    #################################
-
-    def uct(self, state):
-
-        root = Node(None, state)
-        root.children = { Node(root, self.game.result(root.state, action)): action for action in self.game.actions(root.state) }
-
-        # Perform the UCT algorithm for a set number of iterations
-        if self.turn < 10:
-            NB_ITERATIONS = 100
-        else:
-            NB_ITERATIONS = 1000
-
-        for _ in range(NB_ITERATIONS):
-            leaf = self.select(root)
-            child = self.expand(leaf)
-            result = self.simulate(child.state)
-            self.back_propagate(result, child)
-
-        # Choose the action with the highest number of visits
-        max_state = max(root.children, key=lambda n: n.N)
-        return root.children.get(max_state)
-
-
-    def select(self, node):
-        
-        if self.game.is_terminal(node.state) or [child for child in node.children.keys() if child.N == 0] != []:
-            return node
-
-        return self.select(max(node.children, key=self.UCB1))
-
- 
-    def expand(self, node):
-
-        if self.game.is_terminal(node.state):
-            return node
-
-        # Keep track of the children that have NOT been visited yet
-        childrenNotVisited = [child for child in node.children.keys() if child.N == 0]
-        if childrenNotVisited == []:
-            # Initialize a new child node with a random action
-            available_actions = self.game.actions(node.state)
-            action = random.choice(available_actions)
-            newState = self.game.result(node.state, action)
-            childNode = Node(node, newState)
-        else:
-            # Select a random child node that has not been visited yet
-            childNode = random.choice(childrenNotVisited)
-            action = node.children[childNode]
-        
-        # Initialize all the children of the child node
-        node.children[childNode] = action
-        childNode.children = { Node(childNode, self.game.result(childNode.state, action)): action for action in self.game.actions(childNode.state) }
-
-        return childNode
- 
-
-    def simulateRandom(self, state):
-                
-        MAX_ITERATION = 500
-        currIteration = 0
-        opponent_player = 1 - state.to_move
-
-        # Simulate a random play-through from the given state to a terminal state
-        while not self.game.is_terminal(state) and currIteration < MAX_ITERATION:
-            available_actions = self.game.actions(state)
-            random_action = random.choice(available_actions)
-            state = self.game.result(state, random_action)
-            currIteration += 1
-
-        return self.game.utility(state, opponent_player)
-    
-    """ With Machine Learning Model """
-    def simulate(self, state):
-
-        if self.turn < 10:
-            return self.simulateRandom(state)
-
-        opponent_player = 1 - state.to_move
-
-        board = np.zeros((8, 8))
-
-        for i in range(2):
-            for pos in state.board[0][i]:
-                player = 1 if i == 0 else -1
-                board[pos // 4][pos % 4] = player
-
-        for i in range(2):
-            for pos in state.board[1][i]:
-                player = 1 if i == 0 else -1
-                board[pos // 4][4 + pos % 4] = player
-        
-        for i in range(2):
-            for pos in state.board[2][i]:
-                player = 1 if i == 0 else -1
-                board[4 + pos // 4][pos % 4] = player
-
-        for i in range(2):
-            for pos in state.board[2][i]:
-                player = 1 if i == 0 else -1
-                board[4 + pos // 4][4 + pos % 4] = player
-        
-        board = board.reshape(1, 8, 8, 1)
-
-        predicted_winner = self.machine_learning_model.predict(board)[0][0]
-
-        print(predicted_winner)
-
-        # predicted_winner is the probability for the black player to win
-        if opponent_player == 1:
-            return predicted_winner
-        else:
-            return 1 - predicted_winner
-    
-    def back_propagate(self, result, node):
-        if node:
-            node.N += 1
-            if self.turn < 10:
-                if result == 1:
-                    node.U += 1
-                self.back_propagate(-result, node.parent)
-            else:
-                node.U += result
-                self.back_propagate(1 - result, node.parent)
-
-
-    def UCB1(self, node):
-        
-        # If the node has not been visited yet
-        if node.N == 0:
-            return float('inf')
-        
-        # Calculate the UCB1 value for the node (Tradeoff between exploitation and exploration)
-        exploitation = node.U / node.N
-        exploration = math.sqrt(math.log(node.parent.N) / node.N)
-        C = math.sqrt(2)
-
-        return exploitation + C * exploration
-    
-    ######################################
-    #### ALPHA-BETA PRUNING ALGORITHM ####
-    ######################################
 
     def alpha_beta_search(self, state):
-        MAX_DEPTH = 3
-        _, action = self.minimax(state, True, -float("inf"), float("inf"), MAX_DEPTH)
+        strBoard = self.getStrRepresentation(state.board)
+        nbPieces = (strBoard.count("o"), strBoard.count("x"))
+        self.removeUselessExplored(nbPieces)
+
+        # print("Explored: ", self.explored.keys())
+
+        _, action = self.minimax(state, True, -float("inf"), float("inf"), self.max_depth)
         return action
+    
+    def isSymetric(self, thisBoard, otherBoard):
 
-    def score_pieces(self, state):
-        nb_pieces = [0, 0]
-        for board in state.board:
-            for i in range(2):
-                nb_pieces[i] += len(board[i])
+        # Same board
+        if thisBoard == otherBoard:
+            return True
         
-        return nb_pieces[self.player] - nb_pieces[1 - self.player]
+        homeBoard1 = [thisBoard[:16], thisBoard[16:32]]
+        otherBoard1 = [thisBoard[32:48], thisBoard[48:]]
+
+        homeBoard2 = [otherBoard[:16], otherBoard[16:32]]
+        otherBoard2 = [otherBoard[32:48], otherBoard[48:]]
+
+        # Symetric board
+        for i in range(2):
+            if homeBoard1 == homeBoard2 and otherBoard1[0] == otherBoard2[1] and otherBoard1[1] == otherBoard2[0]:
+                return True
+            if homeBoard1[0] == homeBoard2[1] and homeBoard1[1] == homeBoard2[0] and otherBoard1 == otherBoard2:
+                return True
+            if homeBoard1[0] == homeBoard2[1] and homeBoard1[1] == homeBoard2[0] and otherBoard1[0] == otherBoard2[1] and otherBoard1[1] == otherBoard2[0]:
+                return True
+        
+        return False
+
+
+    def alreadyExplored(self, boardStr, nbPieces):
+        if nbPieces in self.explored:
+            for key, value in self.explored[nbPieces].items():
+                if self.isSymetric(key, boardStr):
+                    return value
+        return None
     
-    def score_position_pieces(self, state):
 
-        # Si pierres connectées, score += 1
-        scores = [0, 0]
-        for board in state.board:
-            for i in range(2):
-                board_list = list(board[i])
-                for j in range(len(board_list)):
-                    pos_j = board_list[j]
-                    for k in range(len(board_list)):
-                        pos_k = board_list[k]
-                        if pos_j == pos_k + 1 or pos_j == pos_k - 1 or pos_j == pos_k + 4 or pos_j == pos_k - 4:
-                            scores[i] += 1
+    def removeUselessExplored(self, nbPieces):
+        keys_to_remove = []
+        for key in self.explored.keys():
+            if key[0] > nbPieces[0] or key[1] > nbPieces[1]:
+                keys_to_remove.append(key)
 
-        # Si pierres au centre du plateau, score += 2
-        for board in state.board:
-            for i in range(2):
-                board_list = list(board[i])
-                for j in range(len(board_list)):
-                    pos_j = board_list[j]
-                    if pos_j == 5 or pos_j == 6 or pos_j == 9 or pos_j == 10:
-                        scores[i] += 2
+        for key in keys_to_remove:
+            del self.explored[key]
 
-        # Si pierres a x possibilité de mouvement, score += factor * x
-        factor = 1
-        scores[self.player] = factor * len(self.game.compute_actions(state.board, self.player))
-        scores[1 - self.player] = factor * len(self.game.compute_actions(state.board, 1 - self.player))
 
-        return scores[self.player] - scores[1 - self.player]
-    
+    def getStrRepresentation(self, board):
+        strBoard = ""
+        for idxBoard in range(4):
+            currBoard = board[idxBoard]
+            for nbTile in range(16):
+                if (nbTile in currBoard[0]):
+                    strBoard += "o"
+                elif (nbTile in currBoard[1]):
+                    strBoard += "x"
+                else:
+                    strBoard += "."
+        return strBoard
+
+
     def eval(self, state):
-
-        # Heuristics
-        score_nb_pieces = self.score_pieces(state)
-        score_position_pieces = self.score_position_pieces(state)
-
-        # Coefficients for the heuristics
-        a = 0.2
-        b = 0.8
-
-        total_score = a * score_nb_pieces + b * score_position_pieces
-        return total_score
+        min_pieces = [4, 4]
+        for board in state.board:
+            for i in range(2):
+                min_pieces[i] = min(min_pieces[i], len(board[i]))
+        
+        return min_pieces[self.player] - min_pieces[1 - self.player]
     
 
     def is_cutoff(self, state, depth):
         return depth == 0 or self.game.is_terminal(state)
 
+    # Score, Action
+    def minimax(self, state, maximizing_player, alpha, beta, depth):
 
-    def minimax(self, state, MAXIMIZING_PLAYER, alpha, beta, depth):
-        bestMove = None
+        strBoard = self.getStrRepresentation(state.board)
+        nbPieces = (strBoard.count('o'), strBoard.count('x'))
+
+        exploredAction = self.alreadyExplored(strBoard, nbPieces)
+        if exploredAction is not None:
+            return 0, exploredAction
 
         if self.is_cutoff(state, depth):
-            return self.eval(state), bestMove
+            return self.eval(state), None
 
-        if MAXIMIZING_PLAYER:
-            maxValue = -float("inf")
+        if maximizing_player:
 
+            maxValue, bestMove = -float("inf"), None
+        
             for action in self.game.actions(state):
                 
                 result_state = self.game.result(state, action)
@@ -255,11 +119,16 @@ class AI(Agent):
                 if beta <= alpha:
                     break
 
+            if (nbPieces in self.explored):
+                self.explored[nbPieces][strBoard] = bestMove
+            else:
+                self.explored[nbPieces] = {strBoard: bestMove}
+
             return maxValue, bestMove
         
         else:
-            minValue = float("inf")
-
+            minValue, bestMove = float("inf"), None
+        
             for action in self.game.actions(state):
                 
                 result_state = self.game.result(state, action)
@@ -272,4 +141,9 @@ class AI(Agent):
                 if beta <= alpha:
                     break
             
+            if (nbPieces in self.explored):
+                self.explored[nbPieces][strBoard] = bestMove
+            else:
+                self.explored[nbPieces] = {strBoard: bestMove}
+
             return minValue, bestMove

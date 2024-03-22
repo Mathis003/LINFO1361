@@ -81,6 +81,9 @@ class ShobuState(NamedTuple):
     actions: List[ShobuAction]
     count_boring_actions: int
 
+    def __eq__(self, other):
+        return True if (isinstance(other, ShobuState) and self.board == other.board) else False
+
 
 """
 Represents the game logic and state management for a game of Shobu.

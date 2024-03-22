@@ -37,7 +37,6 @@ class AlphaBetaAgent(Agent):
         ShobuAction: The action determined to be the best by the alpha-beta algorithm.
     """
     def play(self, state, remaining_time):
-        self.total_nodes_generated = 0
         return self.alpha_beta_search(state)
     
 

@@ -243,7 +243,7 @@ if __name__ == "__main__":
         log_file = args.logs
         agent_white, agent_black = get_agents(args, args.display)
 
-        NB_GAMES = 10
+        NB_GAMES = 1
         NB_WHITE_WINS, NB_BLACK_WINS, NB_DRAWS = 0, 0, 0
 
         for i in range(NB_GAMES):
