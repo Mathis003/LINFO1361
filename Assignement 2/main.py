@@ -3,6 +3,7 @@ from agents.human_agent import HumanAgent
 from agents.alphabeta_agent import AlphaBetaAgent
 from agents.uct_agent import UCTAgent
 from agents.contest_agent import AI
+from agents.contest_agent_V1 import AI_V1
 from shobu import ShobuGame
 
 from logs import *
@@ -27,6 +28,8 @@ def get_agents(args, display):
             return UCTAgent(player, ShobuGame(), 50) # 500 iterations
         elif agent_name == "agent":
             return AI(player, ShobuGame())
+        elif agent_name == "agent_V1":
+            return AI_V1(player, ShobuGame())
         else:
             raise Exception(f"Invalid player: {agent_name}")
     

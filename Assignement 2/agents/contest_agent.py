@@ -1,98 +1,107 @@
 from agents.agent import Agent
 
-# Same board for all the boards
-SAME = 0
+SAME_BOARD = 0
 
-VERTICAL_SWITCH_FIRST_SECOND = -1
-VERTICAL_SWITCH_THIRD_FOURTH = -2
-VERTICAL_SWITCH_FIRST_SECOND_THIRD_FOURTH = -3
-DIAGONAL_FIRST_SECOND = -4
-DIAGONAL_THIRD_FOURTH = -5
-DIAGONAL_INVERSE_FIRST_SECOND = -6
-DIAGONAL_INVERSE_THIRD_FOURTH = -7
+VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH = 1, 2
+VERTICAL_SWITCH_FIRST_SECOND, VERTICAL_SWITCH_THIRD_FOURTH, VERTICAL_SWITCH_ALL = 3, 4, 5
+VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH = 6, 7, 8, 9
 
-# Symetries for all the boards
-VERTICAL_ALL = 1
-HORIZONTAL_ALL = 2
-DIAGONAL_ALL = 3
-DIAGONAL_INVERSE_ALL = 4
+HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH = 10, 11
+HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH = 12, 13, 14, 15
 
-# Symetries for the first board
-VERTICAL_FIRST = 5
-HORIZONTAL_FIRST = 6
-DIAGONAL_FIRST = 7
-DIAGONAL_INVERSE_FIRST = 8
+DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH = 16, 17
+DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH = 18, 19, 20, 21
 
-# Symetries for the second board
-VERTICAL_SECOND = 9
-HORIZONTAL_SECOND = 10
-DIAGONAL_SECOND = 11
-DIAGONAL_INVERSE_SECOND = 12
-
-# Symetries for the third board
-VERTICAL_THIRD = 13
-HORIZONTAL_THIRD = 14
-DIAGONAL_THIRD = 15
-DIAGONAL_INVERSE_THIRD = 16
-
-# Symetries for the fourth board
-VERTICAL_FOURTH = 17
-HORIZONTAL_FOURTH = 18
-DIAGONAL_FOURTH = 19
-DIAGONAL_INVERSE_FOURTH = 20
-
-# Symetries for the first and second boards
-VERTICAL_FIRST_SECOND = 21
-HORIZONTAL_FIRST_SECOND = 22
-
-# Symetries for the first and third boards
-VERTICAL_FIRST_THIRD = 23
-HORIZONTAL_FIRST_THIRD = 24
-
-# Symetries for the second and fourth boards
-VERTICAL_SECOND_FOURTH = 25
-HORIZONTAL_SECOND_FOURTH = 26
-
-# Symetries for the third and fourth boards
-VERTICAL_THIRD_FOURTH = 27
-HORIZONTAL_THIRD_FOURTH = 28
+DIAGONAL_INVERSE_FIRST_SECOND, DIAGONAL_INVERSE_THIRD_FOURTH = 22, 23
+DIAGONAL_INVERSE_FIRST, DIAGONAL_INVERSE_SECOND, DIAGONAL_INVERSE_THIRD, DIAGONAL_INVERSE_FOURTH = 24, 25, 26, 27
 
 
-class TranpositionTable:
 
+#################################################
+########### == Transposition Table == ###########
+#################################################
+
+"""
+This class is used to store state of the game for a fixed number of pieces for each player.
+There is methods to access, set, remove, clear, keys, values and items of the table.
+
+The state is stored in a dictionary where the key is the hashed board and the value is a dictionary containing:
+    - value       (float)       : The evaluation value of the state.
+    - lowerbound  (float)       : The lowerbound of the value.
+    - upperbound  (float)       : The upperbound of the value.
+    - move        (ShobuAction) : The best move to play from this state.
+    - depth       (int)         : The depth of the search when the state was stored.
+"""
+class TranspositionTable:
+    
+    """
+    Initialize the table as an empty dictionary.
+    """
     def __init__(self):
         self.table = {}
 
-    def get(self, key, default_key=None):
-        return self.table.get(key, default_key)
+    """
+    Get the value of the key in the table. 
+    If the key is not in the table, return the default value.
+    """
+    def get(self, key, default_value=None):
+        return self.table.get(key, default_value)
 
+    """
+    Set the value of the key in the table.
+    """
     def set(self, key, value):
         self.table[key] = value
     
+    """
+    Check if the key is in the table.
+    """
     def contain(self, key):
         return key in self.table
     
+    """
+    Remove the key from the table.
+    """
     def remove(self, key):
-        del self.table[key]
+        self.table.pop(key, None)
 
+    """
+    Clear the table.
+    """
     def clear(self):
         self.table.clear()
     
+    """
+    Get the keys of the table.
+    """
     def keys(self):
         return self.table.keys()
 
+    """
+    Get the values of the table.
+    """
     def values(self):
         return self.table.values()
 
+    """
+    Get the items (= pair of (key, value)) of the table.
+    """
     def items(self):
         return self.table.items()
 
 
+#################################################
+############ == SYMMETRY COMPARER == ############
+#################################################
+    
+"""
+This class is used for comparing game state symmetries and obtaining different symmetries of a game board.
+"""
 class SymmetryComparer:
 
-    def __init__(self):
-        pass
-
+    """
+    Performs a left rotation of the game board.
+    """
     def rotateLeftBoard(self, board):
         count = 0
         start_idx, idx = 3, 3
@@ -106,6 +115,9 @@ class SymmetryComparer:
             count += 1
         return newBoard
     
+    """
+    Apply a diagonal symmetry to the board.
+    """
     def get_diagSymmetricBoard(self, board):
         count = 0
         start_idx, idx = 15, 15
@@ -119,6 +131,9 @@ class SymmetryComparer:
             count += 1
         return newBoard
     
+    """
+    Obtains the board symmetric about the diagonal.
+    """
     def get_diagInverseSymmetricBoard(self, board):
         count = 0
         start_idx, idx = 0, 0
@@ -132,32 +147,55 @@ class SymmetryComparer:
             count += 1
         return newBoard
 
+    """
+    Compares the symmetries of the game board with those stored in the transposition table.
+    """
     def get_horizSymmetricBoard(self, board):
         return board[12:] + board[8:12] + board[4:8] + board[:4]
     
+    """
+    Obtains the vertical symmetries of the game board.
+    """
     def get_vertSymmetricBoard(self, board):
         board = board[::-1]
         return board[12:] + board[8:12] + board[4:8] + board[:4]
     
+    """
+    Obtains the evaluated move for the game board from the transposition table.
+    """
     def get_sameSymmetry(self, board, transpositionTable):
         tt_entry = transpositionTable.get(board)
-        if tt_entry is not None:
-            return [(SAME, tt_entry)]
-        return []
+        return [(SAME_BOARD, tt_entry)] if tt_entry is not None else []
 
+    """
+    Obtains the vertical symmetries of the game board.
+    """
     def get_verticalSymmetry(self, board, transpositionTable):
         return self.get_symmetry(board, transpositionTable, self.get_vertSymmetricBoard, [VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH, VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH])
 
+    """
+    Obtains the horizontal symmetries of the game board.
+    """
     def get_horizontalSymmetry(self, board, transpositionTable):
         return self.get_symmetry(board, transpositionTable, self.get_horizSymmetricBoard, [HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH, HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH])
     
+    """
+    Obtains the diagonal symmetries of the game board.
+    """
     def get_diagonalSymmetry(self, board, transpositionTable):
        return self.get_symmetry(board, transpositionTable, self.get_diagSymmetricBoard, [DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH, DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH])
 
+    """
+    Obtains the diagonal inverse symmetries of the game board.
+    """
     def get_diagonalInverseSymmetry(self, board, transpositionTable):
        return self.get_symmetry(board, transpositionTable, self.get_diagInverseSymmetricBoard, [DIAGONAL_INVERSE_FIRST_SECOND, DIAGONAL_INVERSE_THIRD_FOURTH, DIAGONAL_INVERSE_FIRST, DIAGONAL_INVERSE_SECOND, DIAGONAL_INVERSE_THIRD, DIAGONAL_INVERSE_FOURTH])
 
-    def get_symmetry(self, board, transpositionTable, getSpecificSymmetry, symmetry):
+    """
+    Obtains the symmetries of the game board.
+    The symmetries are obtained by applying the specific symmetry function given in parameter to the game board.
+    """
+    def get_symmetry(self, board, transpositionTable, getSpecificSymmetry, symmetries):
 
         list_result = []
 
@@ -169,12 +207,12 @@ class SymmetryComparer:
         partsBoard = [first_board, second_board, third_board, fourth_board]
 
         ### Partie spécifique pour la symétrie verticale ###
-        if symmetry[0] == VERTICAL_FIRST_SECOND:
+        if symmetries[0] == VERTICAL_FIRST_SECOND:
 
             newBoard = second_board + first_board + fourth_board + third_board
             entry = transpositionTable.get(newBoard)
             if entry is not None:
-                list_result.append((VERTICAL_SWITCH_FIRST_SECOND_THIRD_FOURTH, entry))
+                list_result.append((VERTICAL_SWITCH_ALL, entry))
             
             newBoard = second_board + first_board + third_board + fourth_board
             entry = transpositionTable.get(newBoard)
@@ -199,7 +237,7 @@ class SymmetryComparer:
             offset = 2
             entry = transpositionTable.get(newBoard)
             if entry is not None:
-                list_result.append((symmetry[i], entry))
+                list_result.append((symmetries[i], entry))
 
         # Symétrie pour un plateau individuel
         for i in range(len(partsBoard)):
@@ -212,11 +250,14 @@ class SymmetryComparer:
 
             entry = transpositionTable.get(newBoard)
             if entry is not None:
-                list_result.append((symmetry[2 + i], entry))
+                list_result.append((symmetries[2 + i], entry))
         
         return list_result
     
-
+    """
+    Obtains the symmetric move from the move given in parameter.
+    The symmetry is the one given in parameter.
+    """
     def get_symmetricMove(self, symmetry, tt_entry):
 
         move = tt_entry["move"]
@@ -225,105 +266,107 @@ class SymmetryComparer:
         change_direction_horiz = {1: 1, -1: -1, 4: -4, -4: 4, 5: -3, -3: 5, 3: -5, -5: 3}
         change_direction_diag  = {1: -1, -1: 1, 4: 4, -4: -4, 5: -5, -5: 5, 3: -3, -3: 3}
 
-        change_stone_id_vert = {0: 3, 4: 7, 8: 11, 12: 15, 1: 2, 5: 6, 9: 10, 13: 14, 2: 1, 6: 5, 10: 9, 14: 13, 3: 0, 7: 4, 11: 8, 15: 12}
+        change_stone_id_vert  = {0: 3, 4: 7, 8: 11, 12: 15, 1: 2, 5: 6, 9: 10, 13: 14, 2: 1, 6: 5, 10: 9, 14: 13, 3: 0, 7: 4, 11: 8, 15: 12}
         change_stone_id_horiz = {0: 12, 1: 13, 2: 14, 3: 15, 4: 8, 5: 9, 6: 10, 7: 11, 8: 4, 9: 5, 10: 6, 11: 7, 12: 0, 13: 1, 14: 2, 15: 3}
-        change_stone_id_diag = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
+        change_stone_id_diag  = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
         
-        if symmetry == SAME:
+        if symmetry == SAME_BOARD:
             return move
         
-        symmetrys = [VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH]
+        symmetries = [VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH]
         for i in range(4):
-            if symmetry == symmetrys[i]:
+            if symmetry == symmetries[i]:
                 if move.passive_board_id == i:
                     return move._replace(direction=change_direction_vert[move.direction], passive_stone_id=change_stone_id_vert[move.passive_stone_id])
                 elif move.active_board_id == i:
                     return move._replace(direction=change_direction_vert[move.direction], active_stone_id=change_stone_id_vert[move.active_stone_id])
                 return move
         
-        symmetrys = [HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH]
+        symmetries = [HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH]
         for i in range(4):
-            if symmetry == symmetrys[i]:
+            if symmetry == symmetries[i]:
                 if move.passive_board_id == i:
                     return move._replace(direction=change_direction_horiz[move.direction], passive_stone_id=change_stone_id_horiz[move.passive_stone_id])
                 elif move.active_board_id == i:
                     return move._replace(direction=change_direction_horiz[move.direction], active_stone_id=change_stone_id_horiz[move.active_stone_id])
                 return move
 
-        symmetrys = [HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH]    
+        symmetries = [HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH]    
         for i in range(2):
-            move = None
-            if symmetry == symmetrys[i]:
+            if symmetry == symmetries[i]:
                 if move.passive_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
                     return move._replace(direction=change_direction_horiz[move.direction], passive_stone_id=change_stone_id_horiz[move.passive_stone_id])
                 if move.active_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
                     return move._replace(direction=change_direction_horiz[move.direction], active_stone_id=change_stone_id_horiz[move.active_stone_id])
                 return move
         
-        # symmetrys = [VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH]    
-        # for i in range(2):
-        #     if symmetry == symmetrys[i]:
-        #         if move.passive_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
-        #             return move._replace(direction=change_direction_vert[move.direction], passive_stone_id=change_stone_id_vert[move.passive_stone_id])
-        #         elif move.active_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
-        #             return move._replace(direction=change_direction_vert[move.direction], active_stone_id=change_stone_id_vert[move.active_stone_id])
-        #         return move
+        symmetries = [VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH]    
+        for i in range(2):
+            if symmetry == symmetries[i]:
+                if move.passive_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
+                    return move._replace(direction=change_direction_vert[move.direction], passive_stone_id=change_stone_id_vert[move.passive_stone_id])
+                elif move.active_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
+                    return move._replace(direction=change_direction_vert[move.direction], active_stone_id=change_stone_id_vert[move.active_stone_id])
+                return move
         
-        # symmetrys = [VERTICAL_SWITCH_FIRST_SECOND, VERTICAL_SWITCH_THIRD_FOURTH]
-        # for i in range(2):
-        #     if symmetry == symmetrys[i]:
-        #         if move.passive_board_id == 2*i:
-        #             move = move._replace(passive_board_id=2*i+1)
-        #         elif move.passive_board_id == 2*i+1:
-        #             move = move._replace(passive_board_id=2*i)
-        #         if move.active_board_id == 2*i:
-        #             move = move._replace(active_board_id=2*i+1)
-        #         elif move.active_board_id == 2*i+1:
-        #             move = move._replace(active_board_id=2*i)
-        #         return move
+        symmetries = [VERTICAL_SWITCH_FIRST_SECOND, VERTICAL_SWITCH_THIRD_FOURTH]
+        for i in range(2):
+            if symmetry == symmetries[i]:
+                if move.passive_board_id == 2*i:
+                    move = move._replace(passive_board_id=2*i+1)
+                elif move.passive_board_id == 2*i+1:
+                    move = move._replace(passive_board_id=2*i)
+                if move.active_board_id == 2*i:
+                    move = move._replace(active_board_id=2*i+1)
+                elif move.active_board_id == 2*i+1:
+                    move = move._replace(active_board_id=2*i)
+                return move
   
-        # if symmetry == VERTICAL_SWITCH_FIRST_SECOND_THIRD_FOURTH:
-        #     if move.passive_board_id == 2:
-        #         move = move._replace(passive_board_id=3)
-        #     elif move.passive_board_id == 3:
-        #         move = move._replace(passive_board_id=2)
-        #     elif move.passive_board_id == 1:
-        #         move = move._replace(passive_board_id=0)
-        #     elif move.passive_board_id == 0:
-        #         move = move._replace(passive_board_id=1)
-        #     if move.active_board_id == 2:
-        #         move = move._replace(active_board_id=3)
-        #     elif move.active_board_id == 3:
-        #         move = move._replace(active_board_id=2)
-        #     elif move.active_board_id == 1:
-        #         move = move._replace(active_board_id=0)
-        #     elif move.active_board_id == 0:
-        #         move = move._replace(active_board_id=1)
-        #     return move
+        if symmetry == VERTICAL_SWITCH_ALL:
+            if move.passive_board_id == 2:
+                move = move._replace(passive_board_id=3)
+            elif move.passive_board_id == 3:
+                move = move._replace(passive_board_id=2)
+            elif move.passive_board_id == 1:
+                move = move._replace(passive_board_id=0)
+            elif move.passive_board_id == 0:
+                move = move._replace(passive_board_id=1)
+            if move.active_board_id == 2:
+                move = move._replace(active_board_id=3)
+            elif move.active_board_id == 3:
+                move = move._replace(active_board_id=2)
+            elif move.active_board_id == 1:
+                move = move._replace(active_board_id=0)
+            elif move.active_board_id == 0:
+                move = move._replace(active_board_id=1)
+            return move
         
-        # symmetrys = [DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH]
-        # for i in range(4):
-        #     if symmetry == symmetrys[i]:
-        #         if move.passive_board_id == i:
-        #             return move._replace(direction=change_direction_diag[move.direction], passive_stone_id=change_stone_id_diag[move.passive_stone_id])
-        #         elif move.active_board_id == i:
-        #             return move._replace(direction=change_direction_diag[move.direction], active_stone_id=change_stone_id_diag[move.active_stone_id])
-        #         return move
+        symmetries = [DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH]
+        for i in range(4):
+            if symmetry == symmetries[i]:
+                if move.passive_board_id == i:
+                    return move._replace(direction=change_direction_diag[move.direction], passive_stone_id=change_stone_id_diag[move.passive_stone_id])
+                elif move.active_board_id == i:
+                    return move._replace(direction=change_direction_diag[move.direction], active_stone_id=change_stone_id_diag[move.active_stone_id])
+                return move
         
-        # symmetrys = [DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH]
-        # for i in range(2):
-        #     if symmetry == symmetrys[i]:
-        #         if move.passive_board_id == 2*i or move.passive_board_id == 2*i+1:
-        #             return move._replace(direction=change_direction_diag[move.direction], passive_stone_id=change_stone_id_diag[move.passive_stone_id])
-        #         if move.active_board_id == 2*i or move.active_board_id == 2*i+1:
-        #             return move._replace(direction=change_direction_diag[move.direction], active_stone_id=change_stone_id_diag[move.active_stone_id])
-        #         return move
+        symmetries = [DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH]
+        for i in range(2):
+            if symmetry == symmetries[i]:
+                if move.passive_board_id == 2*i or move.passive_board_id == 2*i+1:
+                    return move._replace(direction=change_direction_diag[move.direction], passive_stone_id=change_stone_id_diag[move.passive_stone_id])
+                if move.active_board_id == 2*i or move.active_board_id == 2*i+1:
+                    return move._replace(direction=change_direction_diag[move.direction], active_stone_id=change_stone_id_diag[move.active_stone_id])
+                return move
      
-        return move # Ne devrait pas arriver
+        return None
             
-
-    def getMove_StoredTT(self, board, transpositionTable, maximizingPlayer):
-
+    """
+    Obtains the best move from the transposition table that are symmetric to the board given in parameter.
+    The best move is the one with the highest value if maximizingPlayer is True, else it is the one with the lowest value among all the symmetric state stored in the TT.
+    """
+    def getBestMove_StoredTT(self, board, transpositionTable, maximizingPlayer):
+        
         list_result_same        = self.get_sameSymmetry(board, transpositionTable)
         list_result_vert        = self.get_verticalSymmetry(board, transpositionTable)
         list_result_horiz       = self.get_horizontalSymmetry(board, transpositionTable)
@@ -335,17 +378,18 @@ class SymmetryComparer:
         bestSymmetry = None
 
         for result in list_result_same + list_result_vert + list_result_horiz + list_result_diag + list_result_inverseDiag:
-   
+            
+            entry = result[1]
             if maximizingPlayer:
-                if bestResult < result[1]["value"]:
+                if bestResult < entry["value"]:
                     bestSymmetry = result[0]
-                    bestEntry    = result[1]
-                    bestResult   = bestEntry["value"]
+                    bestResult   = entry["value"]
+                    bestEntry    = entry
             else:
-                if result[1]["value"] < bestResult:
+                if entry["value"] < bestResult:
                     bestSymmetry = result[0]
-                    bestEntry    = result[1]
-                    bestResult   = bestEntry["value"]
+                    bestResult   = entry["value"]
+                    bestEntry    = entry
         
         if bestEntry is None:
             return None, None
@@ -353,36 +397,97 @@ class SymmetryComparer:
         return bestEntry, self.get_symmetricMove(bestSymmetry, bestEntry)
 
 
+#################################################
+################ == AI Player == ################
+#################################################
 
+"""
+This class is used to implement the AI player for the Shobu game.
+The AI player uses the alpha-beta search algorithm with transposition table to play the game.
 
+The AI player has the following attributes:
+    - player            (int)              : The player number of the AI.
+    - game              (ShobuGame)        : The game object of the Shobu game.
+    - explored          (dict)             : The dictionary containing the explored states of the game.
+    - symmetryComparer  (SymmetryComparer) : The symmetry comparer used to compare the symmetries of the game board.
+    - max_depth         (int)              : The maximum depth of the search in the alpha-beta algorithm.
 
-
-
+The explored dictionary contains the states of the game for a fixed number of pieces for each player.
+The key of the dictionary is the number of pieces for each player
+and the value is a TranspositionTable object containing the states of the game for this number of pieces.
+"""
 class AI(Agent):
 
     def __init__(self, player, game):
         super().__init__(player, game)
-        self.max_depth = 3
         self.explored = {}
         self.symmetryComparer = SymmetryComparer()
+        self.max_depth = 3 # To change if needed
 
-
+    """
+    Clear the old states of the game that are not needed anymore.
+    The old states are the states with a number of pieces greater than the number of pieces of the current game.
+    """
     def clear_oldStates(self, nb_pieces):
         keys = list(self.explored.keys())
         for key in keys:
             if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
                 del self.explored[key]
 
+    """
+    Get the number of pieces for each player in the game.
+    """
+    def getPieces(self, boards):
+        nb_white_pieces, nb_black_pieces = 0, 0
+        for board in boards:
+            nb_white_pieces += len(board[0])
+            nb_black_pieces += len(board[1])
+        return (nb_white_pieces, nb_black_pieces)
 
+    """
+    Hash the game board to store it in the transposition table.
+    """
+    def hashBoard(self, boards):
+        board_str = ""
+        for board in boards:
+            positions_white, positions_black = list(board[0]), list(board[1])
+            for pos_idx in range(16):
+                    if pos_idx in positions_white:
+                        board_str += "o"
+                    elif pos_idx in positions_black:
+                        board_str += "x"
+                    else:
+                        board_str += "."
+        return board_str
+
+    """
+    Play the move using the alpha-beta search algorithm.
+    The clearing of the old states is done before playing the move.
+    """
     def play(self, state, remaining_time):
         self.clear_oldStates(self.getPieces(state.board))
         return self.alpha_beta_search(state)
     
-
+    """
+    Compute the best move using the alpha-beta search algorithm with transposition table.
+    """
+    def alpha_beta_search(self, state):
+        _, action = self.minimaxAlphaBetaWithTT(state, - float("inf"), float("inf"), self.max_depth, True)
+        # if action not in self.game.actions(state):
+        #     print("Error: Action not in actions")
+        #     exit(1)
+        return action
+    
+    """
+    Check if the state is a cutoff state.
+    """
     def is_cutoff(self, state, depth):
         return depth == 0 or self.game.is_terminal(state)
 
-
+    """
+    Evaluate the state using the evaluation function.
+    The evaluation function is a weighted sum of the material advantage, the positional advantage and the protection advantage.
+    """
     def eval(self, state, debug=False):
 
         board    = state.board
@@ -405,6 +510,12 @@ class AI(Agent):
             nbPieces_min[opponent] = min(len(board[i][opponent]), nbPieces_min[opponent])
 
         score_material_min = nbPieces_min[player] - nbPieces_min[opponent]
+
+        if nbPieces_min[player] == 0:
+            return - float("inf")
+        
+        if nbPieces_min[opponent] == 0:
+            return float("inf")
 
         # if debug:
             # print("score_material_all : ", score_material_all)
@@ -442,6 +553,10 @@ class AI(Agent):
         min_score_protection = -32
         score_protection = 0
 
+        max_score_attack = 32
+        min_score_attack = -32
+        score_attack = 0
+
         for i in range(4):
             positions_player   = list(board[i][player])
             positions_opponent = list(board[i][opponent])
@@ -477,7 +592,9 @@ class AI(Agent):
                 for offset in offsets:
                     if position + offset in positions_player:
                         score_protection += 1
-            
+                    if position + offset in positions_opponent:
+                        score_protection += 1
+
             for position in positions_opponent:
 
                 offsets = [-1, 1, -4, 4, -5, 5, -3, 3]
@@ -509,73 +626,28 @@ class AI(Agent):
                 for offset in offsets:
                     if position + offset in positions_opponent:
                         score_protection -= 1
+                    if position + offset in positions_player:
+                        score_protection -= 1
 
         # if debug:
             # print("score_protection : ", score_protection)
             # print("=======================================\n")
         
         score_protection = (score_protection - min_score_protection) / (max_score_protection - min_score_protection)
+        score_attack     = (score_attack - min_score_attack) / (max_score_attack - min_score_attack)
 
-        # Avantages de mobilité (Trop long à calculer !)
-        # max_score_mobility = 130  # A determiner
-        # min_score_mobility = -130 # A determiner
-        # player_moves   = self.game.compute_actions(board, player)
-        # opponent_moves = self.game.compute_actions(board, opponent)
-        # score_mobility = len(player_moves) - len(opponent_moves)
-
-        # if debug:
-            # print("score_mobility : ", score_mobility)
-            # print("=======================================\n")
-
-        # score_mobility = (score_mobility - min_score_mobility) / (max_score_mobility - min_score_mobility)
-
-        # Avantage de menace de poussée
-        # score_push = 0 
-        # Trop compliqué à calculer pour l'instant sans utiliser self.game.result() pour simuler les coups (trop lent)
-  
         # Coefficients de pondération
         coeff_material     = 0.65  # A determiner
         coeff_position     = 0.25  # A determiner
-        coeff_protection   = 0.1   # A determiner
+        coeff_protection   = 0.05  # A determiner
+        coeff_attack       = 0.05  # A determiner
 
-        # coeff_mobility     = 0.05  # A determiner
-        # coeff_push         = 0.0   # A determiner
-
-        total_score = coeff_material * score_material + coeff_position * score_position + coeff_protection * score_protection
+        total_score = coeff_material * score_material + coeff_position * score_position + coeff_protection * score_protection + coeff_attack * score_attack
         return total_score
-
-
-    def alpha_beta_search(self, state):
-        _, action = self.minimaxAlphaBetaWithTT(state, - float("inf"), float("inf"), self.max_depth, True)
-        if action not in self.game.actions(state):
-            print("Error: Action not in actions")
-            exit(1)
-        return action
     
-    
-    def getPieces(self, board):
-        nb_white_pieces, nb_black_pieces = 0, 0
-        for currBoard in board:
-            nb_white_pieces += len(currBoard[0])
-            nb_black_pieces += len(currBoard[1])
-        return (nb_white_pieces, nb_black_pieces)
-
-
-    def hashBoard(self, board):
-        board_str = ""
-        for i in range(4):
-            positions_white = list(board[i][0])
-            positions_black = list(board[i][1])
-            for pos_idx in range(16):
-                    if pos_idx in positions_white:
-                        board_str += "o"
-                    elif pos_idx in positions_black:
-                        board_str += "x"
-                    else:
-                        board_str += "."
-        return board_str
-    
-
+    """
+    Compute the best move using the alpha-beta search algorithm with transposition table.
+    """
     def minimaxAlphaBetaWithTT(self, state, alpha, beta, depth, maximizingPlayer):
 
         boardHashed = self.hashBoard(state.board)
@@ -584,11 +656,10 @@ class AI(Agent):
 
         tt_entry = None
         if TT is None:
-            TT = TranpositionTable()
+            TT = TranspositionTable()
             self.explored[nbPieces] = TT
         else:
-            tt_entry, move = self.symmetryComparer.getMove_StoredTT(boardHashed, TT, maximizingPlayer)
-
+            tt_entry, move = self.symmetryComparer.getBestMove_StoredTT(boardHashed, TT, maximizingPlayer)
             if tt_entry is not None and move is not None and tt_entry["depth"] >= depth:
                 
                 value = None
@@ -611,7 +682,7 @@ class AI(Agent):
         bestMove = None
 
         if maximizingPlayer:
-            value = -float("inf")
+            value = - float("inf")
             a = alpha
             
             for action in self.game.actions(state):
@@ -641,16 +712,19 @@ class AI(Agent):
                 if b <= alpha:
                     break
         
-        lowerbound = -float("inf")
+        lowerbound = - float("inf")
         upperbound = float("inf")
+
         if value <= alpha:
             upperbound = value
+        
+        if value >= beta:
+            lowerbound = value
+
         if value > alpha and value < beta:
             upperbound = value
             lowerbound = value
-        if value >= beta:
-            lowerbound = value
         
-        TT.set(boardHashed, {"value": value, "lowerbound": lowerbound, "upperbound": upperbound, "move": bestMove, "symetrie": SAME, "depth": depth})
+        TT.set(boardHashed, {"value": value, "lowerbound": lowerbound, "upperbound": upperbound, "move": bestMove, "depth": depth})
         
         return value, bestMove
