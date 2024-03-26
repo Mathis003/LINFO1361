@@ -1,20 +1,33 @@
 from agents.agent import Agent
 
+"""
+Idea to implement :
+    - Rearrange nodes before exploration in minimax (best apparent move first)
+    - Iterative deepening to deal with timing (with transposition table, store best move from previous iteration to improve move ordering)
+            => With fixed time limit, last iteration must usually be aborted
+            => Always store the best move from the previous iteration in the transposition table
+            => Try to predict if another iteration can be completed before the time runs out
+            => Can use incomplete last iteration if at least one move searched
+    - Transposition table with symmetries => Replace existing results with new ones if TT is filled up
+    - Search promising moves deeper, unpromising ones less deep (avoid “horizon effect”)
+    - Parameter tuning for evaluation function – by machine learning
+"""
+
+## Variables use for the symmetries of the game board ##
+
 SAME_BOARD = 0
 
-VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH = 1, 2
-VERTICAL_SWITCH_FIRST_SECOND, VERTICAL_SWITCH_THIRD_FOURTH, VERTICAL_SWITCH_ALL = 3, 4, 5
-VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH = 6, 7, 8, 9
+VERTICAL_ALL          = 1
+DIAGONAL_ALL          = 2
+DIAGONAL_INVERSE__ALL = 3
 
-HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH = 10, 11
-HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH = 12, 13, 14, 15
+VERTICAL_SWITCH_HOME     = 4
+VERTICAL_SWITCH_OPPONENT = 5
+VERTICAL_SWITCH_ALL      = 6
 
-DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH = 16, 17
-DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH = 18, 19, 20, 21
-
-DIAGONAL_INVERSE_FIRST_SECOND, DIAGONAL_INVERSE_THIRD_FOURTH = 22, 23
-DIAGONAL_INVERSE_FIRST, DIAGONAL_INVERSE_SECOND, DIAGONAL_INVERSE_THIRD, DIAGONAL_INVERSE_FOURTH = 24, 25, 26, 27
-
+ROTATION_90_Left_ALL  = 7
+ROTATION_180_Left_ALL = 8  # = HORIZONTAL_ALL
+ROTATION_270_Left_ALL = 9
 
 
 #################################################
@@ -104,6 +117,22 @@ class SymmetryComparer:
     """
     def rotateLeftBoard(self, board):
         count = 0
+        start_idx, idx = 12, 12
+        newBoard = ""
+        while count < 16:
+            newBoard += board[idx]
+            idx -= 4
+            if idx < 0:
+                start_idx += 1
+                idx = start_idx
+            count += 1
+        return newBoard
+    
+    """
+    Performs a right rotation of the game board.
+    """
+    def rotateRightBoard(self, board):
+        count = 0
         start_idx, idx = 3, 3
         newBoard = ""
         while count < 16:
@@ -161,41 +190,13 @@ class SymmetryComparer:
         return board[12:] + board[8:12] + board[4:8] + board[:4]
     
     """
-    Obtains the evaluated move for the game board from the transposition table.
-    """
-    def get_sameSymmetry(self, board, transpositionTable):
-        tt_entry = transpositionTable.get(board)
-        return [(SAME_BOARD, tt_entry)] if tt_entry is not None else []
-
-    """
-    Obtains the vertical symmetries of the game board.
-    """
-    def get_verticalSymmetry(self, board, transpositionTable):
-        return self.get_symmetry(board, transpositionTable, self.get_vertSymmetricBoard, [VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH, VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH])
-
-    """
-    Obtains the horizontal symmetries of the game board.
-    """
-    def get_horizontalSymmetry(self, board, transpositionTable):
-        return self.get_symmetry(board, transpositionTable, self.get_horizSymmetricBoard, [HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH, HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH])
-    
-    """
-    Obtains the diagonal symmetries of the game board.
-    """
-    def get_diagonalSymmetry(self, board, transpositionTable):
-       return self.get_symmetry(board, transpositionTable, self.get_diagSymmetricBoard, [DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH, DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH])
-
-    """
-    Obtains the diagonal inverse symmetries of the game board.
-    """
-    def get_diagonalInverseSymmetry(self, board, transpositionTable):
-       return self.get_symmetry(board, transpositionTable, self.get_diagInverseSymmetricBoard, [DIAGONAL_INVERSE_FIRST_SECOND, DIAGONAL_INVERSE_THIRD_FOURTH, DIAGONAL_INVERSE_FIRST, DIAGONAL_INVERSE_SECOND, DIAGONAL_INVERSE_THIRD, DIAGONAL_INVERSE_FOURTH])
-
-    """
     Obtains the symmetries of the game board.
     The symmetries are obtained by applying the specific symmetry function given in parameter to the game board.
     """
-    def get_symmetry(self, board, transpositionTable, getSpecificSymmetry, symmetries):
+    def get_AllSymmetry(self, board, transpositionTable):
+        
+        # !! Moyen de faire de la symétrie avec HOME board + OPPONENT board !! #
+        # !! Mais pas avec deux HOME board ou deux OPPONENT board !! #
 
         list_result = []
 
@@ -204,162 +205,161 @@ class SymmetryComparer:
         third_board  = board[32:48]
         fourth_board = board[48:]
 
-        partsBoard = [first_board, second_board, third_board, fourth_board]
+        # SAME_BOARD
+        self.addEntryIfStoredTT(transpositionTable, board, list_result, SAME_BOARD)
 
-        ### Partie spécifique pour la symétrie verticale ###
-        if symmetries[0] == VERTICAL_FIRST_SECOND:
+        # VERTICAL_ALL
+        newBoard = self.get_vertSymmetricBoard(first_board) + self.get_vertSymmetricBoard(second_board) + self.get_vertSymmetricBoard(third_board) + self.get_vertSymmetricBoard(fourth_board)
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_ALL)
 
-            newBoard = second_board + first_board + fourth_board + third_board
-            entry = transpositionTable.get(newBoard)
-            if entry is not None:
-                list_result.append((VERTICAL_SWITCH_ALL, entry))
-            
-            newBoard = second_board + first_board + third_board + fourth_board
-            entry = transpositionTable.get(newBoard)
-            if entry is not None:
-                list_result.append((VERTICAL_SWITCH_FIRST_SECOND, entry))
-            
-            newBoard = first_board + second_board + fourth_board + third_board
-            entry = transpositionTable.get(newBoard)
-            if entry is not None:
-                list_result.append((VERTICAL_SWITCH_THIRD_FOURTH, entry))
+        # DIAGONAL_ALL
+        newBoard = self.get_diagSymmetricBoard(first_board) + self.get_diagSymmetricBoard(second_board) + self.get_diagSymmetricBoard(third_board) + self.get_diagSymmetricBoard(fourth_board)
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, DIAGONAL_ALL)
+
+        # DIAGONAL_INVERSE__ALL
+        newBoard = self.get_diagInverseSymmetricBoard(first_board) + self.get_diagInverseSymmetricBoard(second_board) + self.get_diagInverseSymmetricBoard(third_board) + self.get_diagInverseSymmetricBoard(fourth_board)
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, DIAGONAL_INVERSE__ALL)
+
+        # VERTICAL_SWITCH_HOME  
+        newBoard = second_board + first_board + third_board + fourth_board
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_SWITCH_HOME)
+
+        # VERTICAL_SWITCH_OPPONENT
+        newBoard = first_board + second_board + fourth_board + third_board
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_SWITCH_OPPONENT)
         
-
-        # Symétrie par deux plateau (home boards / opponent boards)
-        offset = 0
-        for i in range(2):
-            newBoard = ""
-            for j in range(len(partsBoard)):
-                if j not in [offset, 1 + offset]:
-                    newBoard += partsBoard[j]
-                else:
-                    newBoard += getSpecificSymmetry(partsBoard[j])
-            offset = 2
-            entry = transpositionTable.get(newBoard)
-            if entry is not None:
-                list_result.append((symmetries[i], entry))
-
-        # Symétrie pour un plateau individuel
-        for i in range(len(partsBoard)):
-            newBoard = ""
-            for j in range(len(partsBoard)):
-                if i != j:
-                    newBoard += partsBoard[j]
-                else:
-                    newBoard += getSpecificSymmetry(partsBoard[j])
-
-            entry = transpositionTable.get(newBoard)
-            if entry is not None:
-                list_result.append((symmetries[2 + i], entry))
+        # VERTICAL_SWITCH_ALL
+        newBoard = second_board + first_board + fourth_board + third_board
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_SWITCH_ALL)
+        
+        # ROTATION_90_Left_ALL
+        newBoard = self.rotateLeftBoard(first_board) + self.rotateLeftBoard(second_board) + self.rotateLeftBoard(third_board) + self.rotateLeftBoard(fourth_board)
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, ROTATION_90_Left_ALL)
+        
+        # ROTATION_180_Left_ALL
+        newBoard = self.get_horizSymmetricBoard(first_board) + self.get_horizSymmetricBoard(second_board) + self.get_horizSymmetricBoard(third_board) + self.get_horizSymmetricBoard(fourth_board)
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, ROTATION_180_Left_ALL)
+        
+        # ROTATION_270_Left_ALL
+        newBoard = self.rotateRightBoard(first_board) + self.rotateRightBoard(second_board) + self.rotateRightBoard(third_board) + self.rotateRightBoard(fourth_board)
+        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, ROTATION_270_Left_ALL)
         
         return list_result
+    
+
+    """
+    Add the symmetric state to the list_result if the state is stored in the transposition table.
+    """
+    def addEntryIfStoredTT(self, transpositionTable, newBoard, list_result, symmetry):
+        entry = transpositionTable.get(newBoard)
+        if entry is not None:
+            list_result.append((symmetry, entry))
     
     """
     Obtains the symmetric move from the move given in parameter.
     The symmetry is the one given in parameter.
     """
-    def get_symmetricMove(self, symmetry, tt_entry):
-
-        move = tt_entry["move"]
+    def get_symmetricMove(self, move, symmetry):
 
         change_direction_vert  = {-3: -5, 5: 3, 3: 5, -5: -3, 4: 4, -4: 4, 1: -1, -1: 1}
         change_direction_horiz = {1: 1, -1: -1, 4: -4, -4: 4, 5: -3, -3: 5, 3: -5, -5: 3}
         change_direction_diag  = {1: -1, -1: 1, 4: 4, -4: -4, 5: -5, -5: 5, 3: -3, -3: 3}
+        change_direction_diag_inverse = {-3: -3, 3: 3, 5: -5, -5: 5, 1: -4, -4: 1, -1: 4, 4: -1}
+        change_direction_rotatioLeft  = {4: -1, -4: 1, 1: 4, -1: -4, 5: 3, -3: 5, 3: -5, -5: -3}
+        change_direction_rotatioRight = {4: 1, -4: -1, 1: -4, -1: 4, 5: -3, -3: -5, 3: 5, -5: 3}
 
         change_stone_id_vert  = {0: 3, 4: 7, 8: 11, 12: 15, 1: 2, 5: 6, 9: 10, 13: 14, 2: 1, 6: 5, 10: 9, 14: 13, 3: 0, 7: 4, 11: 8, 15: 12}
         change_stone_id_horiz = {0: 12, 1: 13, 2: 14, 3: 15, 4: 8, 5: 9, 6: 10, 7: 11, 8: 4, 9: 5, 10: 6, 11: 7, 12: 0, 13: 1, 14: 2, 15: 3}
         change_stone_id_diag  = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
+        change_stone_id_diag_inverse  = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
+        change_stone_id_rotationLeft  = {0: 12, 1: 8, 2: 4, 3: 6, 4: 13, 5: 9, 6: 5, 7: 1, 8: 14, 9: 10, 10: 6, 11: 2, 12: 15, 13: 11, 14: 7, 15: 3}
+        change_stone_id_rotationRight = {0: 3, 1: 7, 2: 11, 3: 13, 4: 2, 5: 6, 6: 10, 7: 14, 8: 1, 9: 5, 10: 9, 11: 13, 12: 0, 13: 4, 14: 8, 15: 12}
         
+
         if symmetry == SAME_BOARD:
             return move
         
-        symmetries = [VERTICAL_FIRST, VERTICAL_SECOND, VERTICAL_THIRD, VERTICAL_FOURTH]
-        for i in range(4):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == i:
-                    return move._replace(direction=change_direction_vert[move.direction], passive_stone_id=change_stone_id_vert[move.passive_stone_id])
-                elif move.active_board_id == i:
-                    return move._replace(direction=change_direction_vert[move.direction], active_stone_id=change_stone_id_vert[move.active_stone_id])
-                return move
+        elif symmetry == VERTICAL_ALL:
+            return move._replace(active_stone_id=change_stone_id_vert[move.active_stone_id],
+                                 passive_stone_id=change_stone_id_vert[move.passive_stone_id],
+                                 direction=change_direction_vert[move.direction])
         
-        symmetries = [HORIZONTAL_FIRST, HORIZONTAL_SECOND, HORIZONTAL_THIRD, HORIZONTAL_FOURTH]
-        for i in range(4):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == i:
-                    return move._replace(direction=change_direction_horiz[move.direction], passive_stone_id=change_stone_id_horiz[move.passive_stone_id])
-                elif move.active_board_id == i:
-                    return move._replace(direction=change_direction_horiz[move.direction], active_stone_id=change_stone_id_horiz[move.active_stone_id])
-                return move
+        elif symmetry == DIAGONAL_ALL:
+            return move._replace(active_stone_id=change_stone_id_diag[move.active_stone_id],
+                                 passive_stone_id=change_stone_id_diag[move.passive_stone_id],
+                                 direction=change_direction_diag[move.direction])
+        
+        elif symmetry == DIAGONAL_INVERSE__ALL:
+            return move._replace(active_stone_id=change_stone_id_diag_inverse[move.active_stone_id],
+                                 passive_stone_id=change_stone_id_diag_inverse[move.passive_stone_id],
+                                 direction=change_direction_diag_inverse[move.direction])
 
-        symmetries = [HORIZONTAL_FIRST_SECOND, HORIZONTAL_THIRD_FOURTH]    
-        for i in range(2):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
-                    return move._replace(direction=change_direction_horiz[move.direction], passive_stone_id=change_stone_id_horiz[move.passive_stone_id])
-                if move.active_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
-                    return move._replace(direction=change_direction_horiz[move.direction], active_stone_id=change_stone_id_horiz[move.active_stone_id])
-                return move
-        
-        symmetries = [VERTICAL_FIRST_SECOND, VERTICAL_THIRD_FOURTH]    
-        for i in range(2):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
-                    return move._replace(direction=change_direction_vert[move.direction], passive_stone_id=change_stone_id_vert[move.passive_stone_id])
-                elif move.active_board_id == 2 * i or move.passive_board_id == 2 * i + 1:
-                    return move._replace(direction=change_direction_vert[move.direction], active_stone_id=change_stone_id_vert[move.active_stone_id])
-                return move
-        
-        symmetries = [VERTICAL_SWITCH_FIRST_SECOND, VERTICAL_SWITCH_THIRD_FOURTH]
-        for i in range(2):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == 2*i:
-                    move = move._replace(passive_board_id=2*i+1)
-                elif move.passive_board_id == 2*i+1:
-                    move = move._replace(passive_board_id=2*i)
-                if move.active_board_id == 2*i:
-                    move = move._replace(active_board_id=2*i+1)
-                elif move.active_board_id == 2*i+1:
-                    move = move._replace(active_board_id=2*i)
-                return move
-  
-        if symmetry == VERTICAL_SWITCH_ALL:
+        elif symmetry == VERTICAL_SWITCH_HOME:
+            if move.passive_board_id == 0:
+                move = move._replace(passive_board_id=1)
+            elif move.passive_board_id == 1:
+                move = move._replace(passive_board_id=0)
+            
+            if move.active_board_id == 0:
+                move = move._replace(active_board_id=1)
+            elif move.active_board_id == 1:
+                move = move._replace(active_board_id=0)
+            
+            return move
+
+        elif symmetry == VERTICAL_SWITCH_OPPONENT:
             if move.passive_board_id == 2:
                 move = move._replace(passive_board_id=3)
             elif move.passive_board_id == 3:
                 move = move._replace(passive_board_id=2)
-            elif move.passive_board_id == 1:
-                move = move._replace(passive_board_id=0)
-            elif move.passive_board_id == 0:
-                move = move._replace(passive_board_id=1)
+            
             if move.active_board_id == 2:
                 move = move._replace(active_board_id=3)
             elif move.active_board_id == 3:
                 move = move._replace(active_board_id=2)
-            elif move.active_board_id == 1:
-                move = move._replace(active_board_id=0)
-            elif move.active_board_id == 0:
-                move = move._replace(active_board_id=1)
+            
             return move
         
-        symmetries = [DIAGONAL_FIRST, DIAGONAL_SECOND, DIAGONAL_THIRD, DIAGONAL_FOURTH]
-        for i in range(4):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == i:
-                    return move._replace(direction=change_direction_diag[move.direction], passive_stone_id=change_stone_id_diag[move.passive_stone_id])
-                elif move.active_board_id == i:
-                    return move._replace(direction=change_direction_diag[move.direction], active_stone_id=change_stone_id_diag[move.active_stone_id])
-                return move
+        elif symmetry == VERTICAL_SWITCH_ALL:
+            if move.passive_board_id == 0:
+                move = move._replace(passive_board_id=1)
+            elif move.passive_board_id == 1:
+                move = move._replace(passive_board_id=0)
+            elif move.passive_board_id == 2:
+                move = move._replace(passive_board_id=3)
+            elif move.passive_board_id == 3:
+                move = move._replace(passive_board_id=2)
+            
+            if move.active_board_id == 0:
+                move = move._replace(active_board_id=1)
+            elif move.active_board_id == 1:
+                move = move._replace(active_board_id=0)
+            elif move.active_board_id == 2:
+                move = move._replace(active_board_id=3)
+            elif move.active_board_id == 3:
+                move = move._replace(active_board_id=2)
+            
+            return move
+    
+        elif symmetry == ROTATION_90_Left_ALL:
+            return move._replace(active_stone_id=change_stone_id_rotationLeft[move.active_stone_id],
+                                 passive_stone_id=change_stone_id_rotationLeft[move.passive_stone_id],
+                                 direction=change_direction_rotatioLeft[move.direction])
+
+        elif symmetry == ROTATION_180_Left_ALL:
+            return move._replace(active_stone_id=change_stone_id_horiz[move.active_stone_id],
+                                 passive_stone_id=change_stone_id_horiz[move.passive_stone_id],
+                                 direction=change_direction_horiz[move.direction])
         
-        symmetries = [DIAGONAL_FIRST_SECOND, DIAGONAL_THIRD_FOURTH]
-        for i in range(2):
-            if symmetry == symmetries[i]:
-                if move.passive_board_id == 2*i or move.passive_board_id == 2*i+1:
-                    return move._replace(direction=change_direction_diag[move.direction], passive_stone_id=change_stone_id_diag[move.passive_stone_id])
-                if move.active_board_id == 2*i or move.active_board_id == 2*i+1:
-                    return move._replace(direction=change_direction_diag[move.direction], active_stone_id=change_stone_id_diag[move.active_stone_id])
-                return move
-     
-        return None
+        elif symmetry == ROTATION_270_Left_ALL:
+            return move._replace(active_stone_id=change_stone_id_rotationRight[move.active_stone_id],
+                                 passive_stone_id=change_stone_id_rotationRight[move.passive_stone_id],
+                                 direction=change_direction_rotatioRight[move.direction])
+
+        else:
+            print("Error: Symmetry not found")
+            exit(1)
+        
             
     """
     Obtains the best move from the transposition table that are symmetric to the board given in parameter.
@@ -367,17 +367,11 @@ class SymmetryComparer:
     """
     def getBestMove_StoredTT(self, board, transpositionTable, maximizingPlayer):
         
-        list_result_same        = self.get_sameSymmetry(board, transpositionTable)
-        list_result_vert        = self.get_verticalSymmetry(board, transpositionTable)
-        list_result_horiz       = self.get_horizontalSymmetry(board, transpositionTable)
-        list_result_diag        = self.get_diagonalSymmetry(board, transpositionTable)
-        list_result_inverseDiag = self.get_diagonalInverseSymmetry(board, transpositionTable)
-
         bestResult   = - float("inf") if maximizingPlayer else float("inf")
         bestEntry    = None
         bestSymmetry = None
 
-        for result in list_result_same + list_result_vert + list_result_horiz + list_result_diag + list_result_inverseDiag:
+        for result in self.get_AllSymmetry(board, transpositionTable):
             
             entry = result[1]
             if maximizingPlayer:
@@ -394,7 +388,7 @@ class SymmetryComparer:
         if bestEntry is None:
             return None, None
         
-        return bestEntry, self.get_symmetricMove(bestSymmetry, bestEntry)
+        return bestEntry, self.get_symmetricMove(bestEntry["move"], bestSymmetry)
 
 
 #################################################
@@ -473,9 +467,9 @@ class AI(Agent):
     """
     def alpha_beta_search(self, state):
         _, action = self.minimaxAlphaBetaWithTT(state, - float("inf"), float("inf"), self.max_depth, True)
-        # if action not in self.game.actions(state):
-        #     print("Error: Action not in actions")
-        #     exit(1)
+        if action not in self.game.actions(state):
+            print("Error: Action not in actions")
+            exit(1)
         return action
     
     """
@@ -725,6 +719,6 @@ class AI(Agent):
             upperbound = value
             lowerbound = value
         
-        TT.set(boardHashed, {"value": value, "lowerbound": lowerbound, "upperbound": upperbound, "move": bestMove, "depth": depth})
+        # TT.set(boardHashed, {"value": value, "lowerbound": lowerbound, "upperbound": upperbound, "move": bestMove, "depth": depth})
         
         return value, bestMove
