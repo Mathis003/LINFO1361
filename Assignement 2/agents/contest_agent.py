@@ -1,4 +1,40 @@
-from agents.agent import Agent
+from agent import Agent
+
+SAME = 0
+
+class TranpositionTable:
+
+    def __init__(self):
+        self.table = {}
+
+    def get(self, key, default_key=None):
+        return self.table.get(key, default_key)
+
+    def set(self, key, value):
+        self.table[key] = value
+    
+    def contain(self, key):
+        return key in self.table
+    
+    def remove(self, key):
+        del self.table[key]
+
+    def clear(self):
+        self.table.clear()
+    
+    def keys(self):
+        return self.table.keys()
+
+    def values(self):
+        return self.table.values()
+
+    def items(self):
+        return self.table.items()
+
+    def __str__(self):
+        pass
+
+
 
 
 """
@@ -22,7 +58,15 @@ class AI(Agent):
     """
     def __init__(self, player, game):
         super().__init__(player, game)
+        self.explored = {}
         self.max_depth = 3
+
+
+    def clear_oldStates(self, nb_pieces):
+        keys = list(self.explored.keys())
+        for key in keys:
+            if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
+                del self.explored[key]
 
     """
     Determines the best action by applying the alpha-beta pruning algorithm.
@@ -37,7 +81,8 @@ class AI(Agent):
         ShobuAction: The action determined to be the best by the alpha-beta algorithm.
     """
     def play(self, state, remaining_time):
-        self.eval(state, True)
+
+        self.clear_oldStates(self.getPieces(state.board))
         return self.alpha_beta_search(state)
     
 
@@ -53,18 +98,6 @@ class AI(Agent):
     """
     def is_cutoff(self, state, depth):
         return depth == 0 or self.game.is_terminal(state)
-    
-
-    """
-    Position Indexing on each board:
-        12 | 13 | 14 | 15
-        ------------------
-        8 |  9 | 10 | 11
-        ------------------
-        4 |  5 |  6 |  7
-        ------------------
-        0 |  1 |  2 |  3
-    """
     
 
     """
@@ -222,33 +255,33 @@ class AI(Agent):
         
         score_protection = (score_protection - min_score_protection) / (max_score_protection - min_score_protection)
 
-        # Avantages de mobilité
-        max_score_mobility = 130  # A determiner
-        min_score_mobility = -130 # A determiner
-        player_moves   = self.game.compute_actions(board, player)
-        opponent_moves = self.game.compute_actions(board, opponent)
-        score_mobility = len(player_moves) - len(opponent_moves)
+        # Avantages de mobilité (Trop long à calculer !)
+        # max_score_mobility = 130  # A determiner
+        # min_score_mobility = -130 # A determiner
+        # player_moves   = self.game.compute_actions(board, player)
+        # opponent_moves = self.game.compute_actions(board, opponent)
+        # score_mobility = len(player_moves) - len(opponent_moves)
 
         # Pas vérifier car trop chiant à faire
         # if debug:
             # print("score_mobility : ", score_mobility)
             # print("=======================================\n")
 
-        score_mobility = (score_mobility - min_score_mobility) / (max_score_mobility - min_score_mobility)
+        # score_mobility = (score_mobility - min_score_mobility) / (max_score_mobility - min_score_mobility)
 
         # Avantage de menace de poussée
-        score_push = 0 
+        # score_push = 0 
         # Trop compliqué à calculer pour l'instant sans utiliser self.game.result() pour simuler les coups (trop lent)
   
         # Coefficients de pondération
         coeff_material     = 0.55  # A determiner
-        coeff_position     = 0.25  # A determiner
-        coeff_mobility     = 0.05  # A determiner
+        coeff_position     = 0.3   # A determiner
         coeff_protection   = 0.15   # A determiner
 
-        coeff_push         = 0.0   # A determiner
+        # coeff_mobility     = 0.05  # A determiner
+        # coeff_push         = 0.0   # A determiner
 
-        total_score = coeff_material * score_material + coeff_position * score_position + coeff_mobility * score_mobility + coeff_protection * score_protection + coeff_push * score_push
+        total_score = coeff_material * score_material + coeff_position * score_position + coeff_protection * score_protection
         return total_score
 
     """
@@ -261,99 +294,148 @@ class AI(Agent):
         ShobuAction: The best action as determined by the alpha-beta algorithm.
     """
     def alpha_beta_search(self, state):
-        _, action = self.max_value(state, - float("inf"), float("inf"), self.max_depth)
+        # _, action = self.minimaxAlphaBeta(state, - float("inf"), float("inf"), self.max_depth, True)
+        _, action = self.minimaxAlphaBetaWithTT(state, - float("inf"), float("inf"), self.max_depth, True)
         return action
     
-    # def hashBoard(self, board):
-    #     board_str = ""
-    #     for i in range(4):
-    #         currBoard = list(board[i])
-    #         for j in range(16):
-    #                 if j in currBoard[0]:
-    #                     board_str += "o"
-    #                 elif j in currBoard[1]:
-    #                     board_str += "x"
-    #                 else:
-    #                     board_str += "."
-    #     return board_str
+    
+    def getPieces(self, board):
+        nb_white_pieces, nb_black_pieces = 0, 0
+        for currBoard in board:
+            nb_white_pieces += len(currBoard[0])
+            nb_black_pieces += len(currBoard[1])
+        return (nb_white_pieces, nb_black_pieces)
+    
+
+    def hashBoard(self, board):
+        board_str = ""
+        for i in range(4):
+            positions_white = list(board[i][0])
+            positions_black = list(board[i][1])
+            for pos_idx in range(16):
+                    if pos_idx in positions_white:
+                        board_str += "o"
+                    elif pos_idx in positions_black:
+                        board_str += "x"
+                    else:
+                        board_str += "."
+        return board_str
 
 
-    """
-    Computes the maximum achievable value for the current player at a given state using the alpha-beta pruning.
-
-    This method recursively explores all possible actions from the current state to find the one that maximizes
-    the player's score, pruning branches that cannot possibly affect the final decision.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - alpha (float): The current alpha value, representing the minimum score that the maximizing player is assured of.
-        - beta (float): The current beta value, representing the maximum score that the minimizing player is assured of.
-        - depth (int): The current depth in the search tree.
-
-    Returns:
-        tuple: A tuple containing the best value achievable from this state and the action that leads to this value.
-            If the state is a terminal state or the depth limit is reached, the action will be None.
-    """
-    def max_value(self, state, alpha, beta, depth):
+    def minimaxAlphaBeta(self, state, alpha, beta, depth, maximizingPlayer):
         
-        # boardHashed = self.hashBoard(state.board)
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+
+        bestMove = None
+
+        if maximizingPlayer:
+            value = -float("inf")
+            a = alpha
+            
+            for action in self.game.actions(state):
+                
+                result_state = self.game.result(state, action)
+                currValue, _ = self.minimaxAlphaBeta(result_state, a, beta, depth - 1, False)
+
+                if value < currValue:
+                    value, bestMove = currValue, action
+                    a = max(a, value)
+
+                if beta <= a:
+                    break
+        else:
+            value = float("inf")
+            b = beta
+            
+            for action in self.game.actions(state):
+                
+                result_state = self.game.result(state, action)
+                currValue, _ = self.minimaxAlphaBeta(result_state, alpha, b, depth - 1, True)
+                
+                if currValue < value:
+                    value, bestMove = currValue, action
+                    b = min(b, value)
+
+                if b <= alpha:
+                    break
+        
+        return value, bestMove
+    
+
+
+    def minimaxAlphaBetaWithTT(self, state, alpha, beta, depth, maximizingPlayer):
+
+        boardHashed = self.hashBoard(state.board)
+        nbPieces = (boardHashed.count('o'), boardHashed.count('x'))
+        TT = self.explored.get(nbPieces)
+
+        tt_entry = None
+        if TT is None:
+            TT = TranpositionTable()
+            self.explored[nbPieces] = TT
+        else:
+            tt_entry = TT.get(boardHashed)
+            if tt_entry is not None and tt_entry["depth"] >= depth:
+
+                if tt_entry["symetrie"] == SAME:
+
+                    if tt_entry["lowerbound"] >= beta:
+                        return tt_entry["lowerbound"], tt_entry["move"]
+                    
+                    if tt_entry["upperbound"] <= alpha:
+                        return tt_entry["upperbound"], tt_entry["move"]
+                    
+                    alpha = max(alpha, tt_entry["lowerbound"])
+                    beta  = min(beta, tt_entry["upperbound"])
+
 
         if self.is_cutoff(state, depth):
             return self.eval(state), None
 
-        maxValue, bestMove = -float("inf"), None
-        
-        for action in self.game.actions(state):
+        bestMove = None
+
+        if maximizingPlayer:
+            value = -float("inf")
+            a = alpha
             
-            result_state = self.game.result(state, action)
-            currValue, _ = self.min_value(result_state, alpha, beta, depth - 1)
+            for action in self.game.actions(state):
+                
+                result_state = self.game.result(state, action)
+                currValue, _ = self.minimaxAlphaBetaWithTT(result_state, a, beta, depth - 1, False)
 
-            if maxValue < currValue:
-                maxValue, bestMove = currValue, action
-                alpha = max(alpha, maxValue)
+                if value < currValue:
+                    value, bestMove = currValue, action
+                    a = max(a, value)
 
-            if beta <= alpha:
-                break
-
-        return maxValue, bestMove
-
-
-    """
-    Computes the minimum achievable value for the opposing player at a given state using the alpha-beta pruning.
-
-    Similar to max_value, this method recursively explores all possible actions from the current state to find
-    the one that minimizes the opponent's score, again using alpha-beta pruning to cut off branches that won't
-    affect the outcome.
-
-    Args:
-        - state (ShobuState): The current state of the game.
-        - alpha (float): The current alpha value, representing the minimum score that the maximizing player is assured of.
-        - beta (float): The current beta value, representing the maximum score that the minimizing player is assured of.
-        - depth (int): The current depth in the search tree.
-
-    Returns:
-        tuple: A tuple containing the best value achievable from this state for the opponent and the action that leads to this value.
-            If the state is a terminal state or the depth limit is reached, the action will be None.
-    """
-    def min_value(self, state, alpha, beta, depth):
-
-        # boardHashed = self.hashBoard(state.board)
-
-        if self.is_cutoff(state, depth):
-            return self.eval(state), None
-
-        minValue, bestMove = float("inf"), None
-        
-        for action in self.game.actions(state):
+                if beta <= a:
+                    break
+        else:
+            value = float("inf")
+            b = beta
             
-            result_state = self.game.result(state, action)
-            currValue, _ = self.max_value(result_state, alpha, beta, depth - 1)
-            
-            if currValue < minValue:
-                minValue, bestMove = currValue, action
-                beta = min(beta, minValue)
+            for action in self.game.actions(state):
+                
+                result_state = self.game.result(state, action)
+                currValue, _ = self.minimaxAlphaBetaWithTT(result_state, alpha, b, depth - 1, True)
+                
+                if currValue < value:
+                    value, bestMove = currValue, action
+                    b = min(b, value)
 
-            if beta <= alpha:
-                break
+                if b <= alpha:
+                    break
         
-        return minValue, bestMove
+        lowerbound = -float("inf")
+        upperbound = float("inf")
+        if value <= alpha:
+            upperbound = value
+        if value > alpha and value < beta:
+            upperbound = value
+            lowerbound = value
+        if value >= beta:
+            lowerbound = value
+        
+        TT.set(boardHashed, {"exact": value, "lowerbound": lowerbound, "upperbound": upperbound, "move": bestMove, "symetrie": SAME, "depth": depth})
+        
+        return value, bestMove
