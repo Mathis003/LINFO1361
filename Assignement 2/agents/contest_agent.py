@@ -265,16 +265,16 @@ class SymmetryComparer:
     """
     def get_symmetricMove(self, move, symmetry):
 
-        change_direction_vert  = {-3: -5, 5: 3, 3: 5, -5: -3, 4: 4, -4: 4, 1: -1, -1: 1}
-        change_direction_horiz = {1: 1, -1: -1, 4: -4, -4: 4, 5: -3, -3: 5, 3: -5, -5: 3}
-        change_direction_diag  = {1: -1, -1: 1, 4: 4, -4: -4, 5: -5, -5: 5, 3: -3, -3: 3}
+        change_direction_vert         = {-3: -5, 5: 3, 3: 5, -5: -3, 4: 4, -4: 4, 1: -1, -1: 1}
+        change_direction_horiz        = {1: 1, -1: -1, 4: -4, -4: 4, 5: -3, -3: 5, 3: -5, -5: 3}
+        change_direction_diag         = {1: -1, -1: 1, 4: 4, -4: -4, 5: -5, -5: 5, 3: -3, -3: 3}
         change_direction_diag_inverse = {-3: -3, 3: 3, 5: -5, -5: 5, 1: -4, -4: 1, -1: 4, 4: -1}
         change_direction_rotatioLeft  = {4: -1, -4: 1, 1: 4, -1: -4, 5: 3, -3: 5, 3: -5, -5: -3}
         change_direction_rotatioRight = {4: 1, -4: -1, 1: -4, -1: 4, 5: -3, -3: -5, 3: 5, -5: 3}
 
-        change_stone_id_vert  = {0: 3, 4: 7, 8: 11, 12: 15, 1: 2, 5: 6, 9: 10, 13: 14, 2: 1, 6: 5, 10: 9, 14: 13, 3: 0, 7: 4, 11: 8, 15: 12}
-        change_stone_id_horiz = {0: 12, 1: 13, 2: 14, 3: 15, 4: 8, 5: 9, 6: 10, 7: 11, 8: 4, 9: 5, 10: 6, 11: 7, 12: 0, 13: 1, 14: 2, 15: 3}
-        change_stone_id_diag  = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
+        change_stone_id_vert          = {0: 3, 4: 7, 8: 11, 12: 15, 1: 2, 5: 6, 9: 10, 13: 14, 2: 1, 6: 5, 10: 9, 14: 13, 3: 0, 7: 4, 11: 8, 15: 12}
+        change_stone_id_horiz         = {0: 12, 1: 13, 2: 14, 3: 15, 4: 8, 5: 9, 6: 10, 7: 11, 8: 4, 9: 5, 10: 6, 11: 7, 12: 0, 13: 1, 14: 2, 15: 3}
+        change_stone_id_diag          = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
         change_stone_id_diag_inverse  = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
         change_stone_id_rotationLeft  = {0: 12, 1: 8, 2: 4, 3: 6, 4: 13, 5: 9, 6: 5, 7: 1, 8: 14, 9: 10, 10: 6, 11: 2, 12: 15, 13: 11, 14: 7, 15: 3}
         change_stone_id_rotationRight = {0: 3, 1: 7, 2: 11, 3: 13, 4: 2, 5: 6, 6: 10, 7: 14, 8: 1, 9: 5, 10: 9, 11: 13, 12: 0, 13: 4, 14: 8, 15: 12}
@@ -418,59 +418,53 @@ class AI(Agent):
 
     def __init__(self, player, game):
         super().__init__(player, game)
-        self.explored = {}
-        self.symmetryComparer = SymmetryComparer()
+        # self.explored = {}
+        # self.symmetryComparer = SymmetryComparer()
         self.max_depth = 3 # To change if needed
 
-    """
-    Clear the old states of the game that are not needed anymore.
-    The old states are the states with a number of pieces greater than the number of pieces of the current game.
-    """
-    def clear_oldStates(self, nb_pieces):
-        keys = list(self.explored.keys())
-        for key in keys:
-            if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
-                self.explored.pop(key, None)
+    # """
+    # Clear the old states of the game that are not needed anymore.
+    # The old states are the states with a number of pieces greater than the number of pieces of the current game.
+    # """
+    # def clear_oldStates(self, nb_pieces):
+    #     keys = list(self.explored.keys())
+    #     for key in keys:
+    #         if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
+    #             self.explored.pop(key, None)
 
-    """
-    Get the number of pieces for each player in the game.
-    """
-    def getPieces(self, boards):
-        nb_white_pieces, nb_black_pieces = 0, 0
-        for board in boards:
-            nb_white_pieces += len(board[0])
-            nb_black_pieces += len(board[1])
-        return (nb_white_pieces, nb_black_pieces)
+    # """
+    # Get the number of pieces for each player in the game.
+    # """
+    # def getPieces(self, boards):
+    #     nb_white_pieces, nb_black_pieces = 0, 0
+    #     for board in boards:
+    #         nb_white_pieces += len(board[0])
+    #         nb_black_pieces += len(board[1])
+    #     return (nb_white_pieces, nb_black_pieces)
 
-    """
-    Hash the game board to store it in the transposition table.
-    """
-    def hashBoard(self, boards):
-        board_str = ""
-        for board in boards:
-            positions_white, positions_black = list(board[0]), list(board[1])
-            for pos_idx in range(16):
-                    if pos_idx in positions_white:
-                        board_str += "o"
-                    elif pos_idx in positions_black:
-                        board_str += "x"
-                    else:
-                        board_str += "."
-        return board_str
+    # """
+    # Hash the game board to store it in the transposition table.
+    # """
+    # def hashBoard(self, boards):
+    #     board_str = ""
+    #     for board in boards:
+    #         positions_white, positions_black = list(board[0]), list(board[1])
+    #         for pos_idx in range(16):
+    #                 if pos_idx in positions_white:
+    #                     board_str += "o"
+    #                 elif pos_idx in positions_black:
+    #                     board_str += "x"
+    #                 else:
+    #                     board_str += "."
+    #     return board_str
 
     """
     Play the move using the alpha-beta search algorithm.
     The clearing of the old states is done before playing the move.
     """
     def play(self, state, remaining_time):
-        self.clear_oldStates(self.getPieces(state.board))
-        return self.alpha_beta_search(state)
-    
-    """
-    Compute the best move using the alpha-beta search algorithm with transposition table.
-    """
-    def alpha_beta_search(self, state):
-        return self.iterativeDeepeningAlphaBeta(state)
+        # self.clear_oldStates(self.getPieces(state.board))
+        return self.search_alphaBeta(state)
     
     """
     Check if the state is a cutoff state.
@@ -483,8 +477,6 @@ class AI(Agent):
     The evaluation function is a weighted sum of the material advantage, the positional advantage and the protection advantage.
     """
     def eval(self, state, debug=False):
-        
-        # TODO : Deep learning model to evaluate the coefficients of the evaluation function ?
 
         board    = state.board
         player   = self.player
@@ -507,11 +499,11 @@ class AI(Agent):
 
         score_material_min = nbPieces_min[player] - nbPieces_min[opponent]
 
+        INF = 999999999
         if nbPieces_min[player] == 0:
-            return - float("inf")
-        
-        if nbPieces_min[opponent] == 0:
-            return float("inf")
+            return - INF
+        elif nbPieces_min[opponent] == 0:
+            return INF
 
         # if debug:
             # print("score_material_all : ", score_material_all)
@@ -640,55 +632,58 @@ class AI(Agent):
 
         total_score = coeff_material * score_material + coeff_position * score_position + coeff_protection * score_protection + coeff_attack * score_attack
         return total_score
+  
+
+    # """
+    # Iteratively deepening alpha-beta search algorithm.
+    # """
+    # def iterativeDeepeningAlphaBeta(self, state):
+    #     bestEval, bestMove = - float("inf"), None
+    #     for depth in range(1, self.max_depth + 1):
+    #         currentEval, currentMove = self.choose_move(state, depth)
+    #         if bestEval < currentEval:
+    #             bestEval, bestMove = currentEval, currentMove
+    #     return bestMove
     
 
-    def choose_move(self, state, depth):
-        alpha, bestMove = - float("inf"), None
-        for action in self.game.actions(state):
-            result_state = self.game.result(state, action)
-            currentEval  = self.minimaxAlphaBetaWithTT(result_state, alpha, float("inf"), depth, False)
-            if currentEval > alpha:
-                alpha = currentEval
-                bestMove = action
-        return alpha, bestMove
-    
-    """
-    Iteratively deepening alpha-beta search algorithm.
-    """
-    def iterativeDeepeningAlphaBeta(self, state):
-        bestEval, bestMove = - float("inf"), None
-        for depth in range(1, self.max_depth + 1):
-            currentEval, currentMove = self.choose_move(state, depth)
-            if bestEval < currentEval:
-                bestEval, bestMove = currentEval, currentMove
-        return bestMove
-    
     """
     Compute the best move using the alpha-beta search algorithm with transposition table.
     """
-    def minimaxAlphaBetaWithTT(self, state, alpha, beta, depth, maximizingPlayer):
-    
-        if self.is_cutoff(state, depth):
-            return self.eval(state)
+    def search_alphaBeta(self, state):
 
-        if maximizingPlayer:
-            maxEval = - float("inf")
+        def max_value(state, alpha, beta, depth):
+            if self.is_cutoff(state, depth):
+                return self.eval(state), None
+
+            max_eval = - float("inf")
+            best_action = None
             for action in self.game.actions(state):
-                result_state = self.game.result(state, action)
-                currentEval = self.minimaxAlphaBetaWithTT(result_state, alpha, beta, depth - 1, False)
-                maxEval = max(maxEval, currentEval)
-                alpha   = max(alpha, currentEval)
-                if beta <= alpha:
-                    break
-            return maxEval
+                child_state = self.game.result(state, action)
+                eval_child, _ = min_value(child_state, alpha, beta, depth - 1)
+                if eval_child > max_eval:
+                    max_eval = eval_child
+                    best_action = action
+                    if max_eval >= beta:
+                        return max_eval, best_action
+                    alpha = max(alpha, max_eval)
+            return max_eval, best_action
+    
+        def min_value(state, alpha, beta, depth):
+            if self.is_cutoff(state, depth):
+                return self.eval(state), None
             
-        else:
-            minEval = float("inf")
+            min_eval = float("inf")
+            best_action = None
             for action in self.game.actions(state):
-                result_state = self.game.result(state, action)
-                currentEval = self.minimaxAlphaBetaWithTT(result_state, alpha, beta, depth - 1, True)
-                minEval = min(minEval, currentEval)
-                beta    = min(beta, currentEval)
-                if beta <= alpha:
-                    break
-            return minEval
+                child_state = self.game.result(state, action)
+                eval_child, _ = max_value(child_state, alpha, beta, depth - 1)
+                if eval_child < min_eval:
+                    min_eval = eval_child
+                    best_action = action
+                    if alpha >= min_eval:
+                        return min_eval, best_action
+                    beta = min(beta, min_eval)
+            return min_eval, best_action
+
+        _, action = max_value(state, - float("inf"), float("inf"), self.max_depth)
+        return action
