@@ -2,15 +2,19 @@ from agents.agent import Agent
 
 """
 Idea to implement :
-    - Rearrange nodes before exploration in minimax (best apparent move first)
+    - Forward pruning : prune branches that are unlikely to be good or decrease the depth of the search for these branches
+            => Maybe use ProbCut algorithm (probabilistic cut algorithm)
+    - Move ordering : rearrange nodes before exploration in minimax (best apparent move first)
     - Iterative deepening to deal with timing (with transposition table, store best move from previous iteration to improve move ordering)
             => With fixed time limit, last iteration must usually be aborted
             => Always store the best move from the previous iteration in the transposition table
             => Try to predict if another iteration can be completed before the time runs out
             => Can use incomplete last iteration if at least one move searched
-    - Transposition table with symmetries => Replace existing results with new ones if TT is filled up
-    - Search promising moves deeper, unpromising ones less deep (avoid “horizon effect”)
+    - Transposition table with symmetries => replace existing results with new ones if TT is filled up
+    - Quiescent search : search promising moves deeper, unpromising ones less deep (avoid “horizon effect”)
     - Parameter tuning for evaluation function – by machine learning
+    - Killer move heuristic : store moves that cause beta cutoffs and try them first in the next iteration
+    - Define a lookup table for the 5 / 10 first moves of the game (opening book)
 """
 
 ## Variables use for the symmetries of the game board ##
@@ -426,7 +430,7 @@ class AI(Agent):
         keys = list(self.explored.keys())
         for key in keys:
             if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
-                del self.explored[key]
+                self.explored.pop(key, None)
 
     """
     Get the number of pieces for each player in the game.
@@ -466,11 +470,7 @@ class AI(Agent):
     Compute the best move using the alpha-beta search algorithm with transposition table.
     """
     def alpha_beta_search(self, state):
-        _, action = self.minimaxAlphaBetaWithTT(state, - float("inf"), float("inf"), self.max_depth, True)
-        if action not in self.game.actions(state):
-            print("Error: Action not in actions")
-            exit(1)
-        return action
+        return self.iterativeDeepeningAlphaBeta(state)
     
     """
     Check if the state is a cutoff state.
@@ -483,6 +483,8 @@ class AI(Agent):
     The evaluation function is a weighted sum of the material advantage, the positional advantage and the protection advantage.
     """
     def eval(self, state, debug=False):
+        
+        # TODO : Deep learning model to evaluate the coefficients of the evaluation function ?
 
         board    = state.board
         player   = self.player
@@ -639,86 +641,54 @@ class AI(Agent):
         total_score = coeff_material * score_material + coeff_position * score_position + coeff_protection * score_protection + coeff_attack * score_attack
         return total_score
     
+
+    def choose_move(self, state, depth):
+        alpha, bestMove = - float("inf"), None
+        for action in self.game.actions(state):
+            result_state = self.game.result(state, action)
+            currentEval  = self.minimaxAlphaBetaWithTT(result_state, alpha, float("inf"), depth, False)
+            if currentEval > alpha:
+                alpha = currentEval
+                bestMove = action
+        return alpha, bestMove
+    
+    """
+    Iteratively deepening alpha-beta search algorithm.
+    """
+    def iterativeDeepeningAlphaBeta(self, state):
+        bestEval, bestMove = - float("inf"), None
+        for depth in range(1, self.max_depth + 1):
+            currentEval, currentMove = self.choose_move(state, depth)
+            if bestEval < currentEval:
+                bestEval, bestMove = currentEval, currentMove
+        return bestMove
+    
     """
     Compute the best move using the alpha-beta search algorithm with transposition table.
     """
     def minimaxAlphaBetaWithTT(self, state, alpha, beta, depth, maximizingPlayer):
-
-        boardHashed = self.hashBoard(state.board)
-        nbPieces = (boardHashed.count('o'), boardHashed.count('x'))
-        TT = self.explored.get(nbPieces)
-
-        tt_entry = None
-        if TT is None:
-            TT = TranspositionTable()
-            self.explored[nbPieces] = TT
-        else:
-            tt_entry, move = self.symmetryComparer.getBestMove_StoredTT(boardHashed, TT, maximizingPlayer)
-            if tt_entry is not None and move is not None and tt_entry["depth"] >= depth:
-                
-                value = None
-                if tt_entry["lowerbound"] >= beta:
-                    value = tt_entry["lowerbound"]
-
-                if tt_entry["upperbound"] <= alpha:
-                    value = tt_entry["upperbound"]
-
-                if value is not None:
-                    return value, move
-                
-                alpha = max(alpha, tt_entry["lowerbound"])
-                beta  = min(beta, tt_entry["upperbound"])
-
-
+    
         if self.is_cutoff(state, depth):
-            return self.eval(state), None
-
-        bestMove = None
+            return self.eval(state)
 
         if maximizingPlayer:
-            value = - float("inf")
-            a = alpha
-            
+            maxEval = - float("inf")
             for action in self.game.actions(state):
-                
                 result_state = self.game.result(state, action)
-                currValue, _ = self.minimaxAlphaBetaWithTT(result_state, a, beta, depth - 1, False)
-
-                if value < currValue:
-                    value, bestMove = currValue, action
-                    a = max(a, value)
-
-                if beta <= a:
+                currentEval = self.minimaxAlphaBetaWithTT(result_state, alpha, beta, depth - 1, False)
+                maxEval = max(maxEval, currentEval)
+                alpha   = max(alpha, currentEval)
+                if beta <= alpha:
                     break
+            return maxEval
+            
         else:
-            value = float("inf")
-            b = beta
-            
+            minEval = float("inf")
             for action in self.game.actions(state):
-                
                 result_state = self.game.result(state, action)
-                currValue, _ = self.minimaxAlphaBetaWithTT(result_state, alpha, b, depth - 1, True)
-                
-                if currValue < value:
-                    value, bestMove = currValue, action
-                    b = min(b, value)
-
-                if b <= alpha:
+                currentEval = self.minimaxAlphaBetaWithTT(result_state, alpha, beta, depth - 1, True)
+                minEval = min(minEval, currentEval)
+                beta    = min(beta, currentEval)
+                if beta <= alpha:
                     break
-        
-        lowerbound = - float("inf")
-        upperbound = float("inf")
-
-        if value <= alpha:
-            upperbound = value
-        
-        if value >= beta:
-            lowerbound = value
-
-        if value > alpha and value < beta:
-            upperbound = value
-            lowerbound = value
-        
-        # TT.set(boardHashed, {"value": value, "lowerbound": lowerbound, "upperbound": upperbound, "move": bestMove, "depth": depth})
-        
-        return value, bestMove
+            return minEval
