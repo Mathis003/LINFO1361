@@ -420,56 +420,56 @@ class AI(Agent):
 
     def __init__(self, player, game):
         super().__init__(player, game)
-        # self.explored = {}
-        # self.symmetryComparer = SymmetryComparer()
+        self.explored = {}
+        self.symmetryComparer = SymmetryComparer()
         self.max_depth = 3 # To change if needed
 
         self.total_time = 0.0
         self.nb_play = 0
 
-    # """
-    # Clear the old states of the game that are not needed anymore.
-    # The old states are the states with a number of pieces greater than the number of pieces of the current game.
-    # """
-    # def clear_oldStates(self, nb_pieces):
-    #     keys = list(self.explored.keys())
-    #     for key in keys:
-    #         if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
-    #             self.explored.pop(key, None)
+    """
+    Clear the old states of the game that are not needed anymore.
+    The old states are the states with a number of pieces greater than the number of pieces of the current game.
+    """
+    def clear_oldStates(self, nb_pieces):
+        keys = list(self.explored.keys())
+        for key in keys:
+            if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
+                self.explored.pop(key, None)
 
-    # """
-    # Get the number of pieces for each player in the game.
-    # """
-    # def getPieces(self, boards):
-    #     nb_white_pieces, nb_black_pieces = 0, 0
-    #     for board in boards:
-    #         nb_white_pieces += len(board[0])
-    #         nb_black_pieces += len(board[1])
-    #     return (nb_white_pieces, nb_black_pieces)
+    """
+    Get the number of pieces for each player in the game.
+    """
+    def getPieces(self, boards):
+        nb_white_pieces, nb_black_pieces = 0, 0
+        for board in boards:
+            nb_white_pieces += len(board[0])
+            nb_black_pieces += len(board[1])
+        return (nb_white_pieces, nb_black_pieces)
 
-    # """
-    # Hash the game board to store it in the transposition table.
-    # """
-    # def hashBoard(self, boards):
-    #     board_str = ""
-    #     for board in boards:
-    #         positions_white, positions_black = list(board[0]), list(board[1])
-    #         for pos_idx in range(16):
-    #                 if pos_idx in positions_white:
-    #                     board_str += "o"
-    #                 elif pos_idx in positions_black:
-    #                     board_str += "x"
-    #                 else:
-    #                     board_str += "."
-    #     return board_str
+    """
+    Hash the game board to store it in the transposition table.
+    """
+    def hashBoard(self, boards):
+        board_str = ""
+        for board in boards:
+            positions_white, positions_black = list(board[0]), list(board[1])
+            for pos_idx in range(16):
+                    if pos_idx in positions_white:
+                        board_str += "o"
+                    elif pos_idx in positions_black:
+                        board_str += "x"
+                    else:
+                        board_str += "."
+        return board_str
 
     """
     Play the move using the alpha-beta search algorithm.
     The clearing of the old states is done before playing the move.
     """
     def play(self, state, remaining_time):
-        # self.clear_oldStates(self.getPieces(state.board))
         self.nb_play += 1
+        self.clear_oldStates(self.getPieces(state.board))
         return self.search_alphaBeta(state)
     
     """
@@ -551,77 +551,42 @@ class AI(Agent):
         min_score_attack = -32
         score_attack = 0
 
+
         for i in range(4):
             positions_player   = list(board[i][player])
             positions_opponent = list(board[i][opponent])
 
-            for position in positions_player:
+            for positions, sign in [(positions_player, 1), (positions_opponent, -1)]:
+                for position in positions:
+                    offsets = [-1, 1, -4, 4, -5, 5, -3, 3]
 
-                offsets = [-1, 1, -4, 4, -5, 5, -3, 3]
-
-                if position % 4 == 0:
-                    offsets.remove(-1)
-                    offsets.remove(-5)
-                    offsets.remove(3)
-
-                if (position + 1) % 4 == 0:
-                    offsets.remove(1)
-                    offsets.remove(-3)
-                    offsets.remove(5)
-                
-                if position < 4:
-                    offsets.remove(-4)
-                    if -5 in offsets:
+                    if position % 4 == 0:
+                        offsets.remove(-1)
                         offsets.remove(-5)
-                    if -3 in offsets:
-                        offsets.remove(-3)
-
-                if position > 11:
-                    offsets.remove(4)
-                    if 5 in offsets:
-                        offsets.remove(5)
-                    if 3 in offsets:
                         offsets.remove(3)
 
-                for offset in offsets:
-                    if position + offset in positions_player:
-                        score_protection += 1
-                    if position + offset in positions_opponent:
-                        score_protection += 1
-
-            for position in positions_opponent:
-
-                offsets = [-1, 1, -4, 4, -5, 5, -3, 3]
-
-                if position % 4 == 0:
-                    offsets.remove(-1)
-                    offsets.remove(-5)
-                    offsets.remove(3)
-
-                if (position + 1) % 4 == 0:
-                    offsets.remove(1)
-                    offsets.remove(-3)
-                    offsets.remove(5)
-                
-                if position < 4:
-                    offsets.remove(-4)
-                    if -5 in offsets:
-                        offsets.remove(-5)
-                    if -3 in offsets:
+                    if (position + 1) % 4 == 0:
+                        offsets.remove(1)
                         offsets.remove(-3)
-
-                if position > 11:
-                    offsets.remove(4)
-                    if 5 in offsets:
                         offsets.remove(5)
-                    if 3 in offsets:
-                        offsets.remove(3)
-                
-                for offset in offsets:
-                    if position + offset in positions_opponent:
-                        score_protection -= 1
-                    if position + offset in positions_player:
-                        score_protection -= 1
+                    
+                    if position < 4:
+                        offsets.remove(-4)
+                        if -5 in offsets:
+                            offsets.remove(-5)
+                        if -3 in offsets:
+                            offsets.remove(-3)
+
+                    if position > 11:
+                        offsets.remove(4)
+                        if 5 in offsets:
+                            offsets.remove(5)
+                        if 3 in offsets:
+                            offsets.remove(3)
+                    
+                    for offset in offsets:
+                        if position + offset in positions:
+                            score_protection += sign
 
         # if debug:
             # print("score_protection : ", score_protection)
