@@ -25,21 +25,21 @@ def convert_log_to_action(log):
         return n_move, action
 
 
-def read_logs(file):
-    print("Loading logs...", end="")
-    actions = []
-    with open(file, "r") as f:
-        for line in f:
-            n_move, action = convert_log_to_action(line.strip())
-            actions.append((action, n_move))
-    print(" done")
-    return actions
-
 # def read_logs(file):
+#     print("Loading logs...", end="")
 #     actions = []
 #     with open(file, "r") as f:
-#         lines = f.readlines()[0].split("|")
-#         for line in lines[:-1]:
+#         for line in f:
 #             n_move, action = convert_log_to_action(line.strip())
 #             actions.append((action, n_move))
+#     print(" done")
 #     return actions
+
+def read_logs(file):
+    actions = []
+    with open(file, "r") as f:
+        lines = f.readlines()[0].split("|")
+        for line in lines[:-1]:
+            n_move, action = convert_log_to_action(line.strip())
+            actions.append((action, n_move))
+    return actions

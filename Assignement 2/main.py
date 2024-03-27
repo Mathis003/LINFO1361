@@ -23,7 +23,7 @@ def get_agents(args, display):
         elif agent_name == "random":
             return RandomAgent(player, ShobuGame())
         elif agent_name == "alphabeta":
-            return AlphaBetaAgent(player, ShobuGame(), 2) # 3 depth
+            return AlphaBetaAgent(player, ShobuGame(), 3) # 3 depth
         elif agent_name == "mcts":
             return UCTAgent(player, ShobuGame(), 50) # 500 iterations
         elif agent_name == "agent":
@@ -142,6 +142,14 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
             if display:
                 run = update_ui(state)
         
+        if hasattr(agent_white, "nb_play"):
+            mean_time = agent_white.total_time / agent_white.nb_play
+            print(f"Mean time for the agent : {mean_time}")
+        
+        if hasattr(agent_black, "nb_play"):
+            mean_time = agent_black.total_time / agent_black.nb_play
+            print(f"Mean time for the agent : {mean_time}")
+        
     except Exception as e:
         if log_file is not None:
             write_logs(logs, log_file)
@@ -240,8 +248,9 @@ if __name__ == "__main__":
             winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file)
             winners[winner] += 1
             total_moves.append(n_moves)
-            
+        
         print(f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
+
     else:
         log_file = args.logs
         agent_white, agent_black = get_agents(args, args.display)

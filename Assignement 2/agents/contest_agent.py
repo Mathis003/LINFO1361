@@ -1,5 +1,7 @@
 from agents.agent import Agent
 
+import time
+
 """
 Idea to implement :
     - Forward pruning : prune branches that are unlikely to be good or decrease the depth of the search for these branches
@@ -422,6 +424,9 @@ class AI(Agent):
         # self.symmetryComparer = SymmetryComparer()
         self.max_depth = 3 # To change if needed
 
+        self.total_time = 0.0
+        self.nb_play = 0
+
     # """
     # Clear the old states of the game that are not needed anymore.
     # The old states are the states with a number of pieces greater than the number of pieces of the current game.
@@ -464,6 +469,7 @@ class AI(Agent):
     """
     def play(self, state, remaining_time):
         # self.clear_oldStates(self.getPieces(state.board))
+        self.nb_play += 1
         return self.search_alphaBeta(state)
     
     """
@@ -685,5 +691,8 @@ class AI(Agent):
                     beta = min(beta, min_eval)
             return min_eval, best_action
 
+        start = time.time()
         _, action = max_value(state, - float("inf"), float("inf"), self.max_depth)
+        end = time.time()
+        self.total_time += end - start
         return action
