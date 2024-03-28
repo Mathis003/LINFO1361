@@ -397,6 +397,14 @@ class SymmetryComparer:
         return bestResult, self.get_symmetricMove(bestEntry["move"], bestSymmetry)
 
 
+
+
+
+
+
+
+
+
 #################################################
 ################ == AI Player == ################
 #################################################
@@ -422,10 +430,13 @@ class AI(Agent):
         super().__init__(player, game)
         self.TT = TranspositionTable()
         self.symmetryComparer = SymmetryComparer()
-        self.max_depth = 3
+        self.max_depth = 6
 
         self.total_time = 0.0
         self.nb_play = 0
+
+        self.timePerMove = 20.0
+        self.timeReached = False
 
         self.best_move = None
         self.best_eval = None
@@ -608,18 +619,24 @@ class AI(Agent):
     Iteratively deepening alpha-beta search algorithm.
     """
     def ID_alphabeta(self, state):
+        start = time.time()
         self.best_move = None
+        self.timeReached = False
         best_eval_state = - float("inf")
-        for depth in range(1, self.max_depth + 1):
-            eval_state = self.search_alphaBeta(state, depth)
+        for depth in range(1, 15): # self.max_depth + 1
+            eval_state = self.search_alphaBeta(state, depth, start)
             # print("Evaluation : ", eval_state)
+            # print(best_eval_state)
             if eval_state > best_eval_state:
                 best_eval_state = eval_state
                 self.best_move = self.best_iter_move
                 self.best_iter_move = None
+            if self.timeReached:
+                break
                 # print("Best_move Current : ", self.best_move)
         # print("Best_move Final : ", self.best_move)
         # print("Length of TT : ", len(self.TT.table))
+        self.total_time += time.time() - start
         return self.best_move
     
 
@@ -666,7 +683,7 @@ class AI(Agent):
     """
     Compute the best move using the alpha-beta search algorithm with transposition table.
     """
-    def search_alphaBeta(self, state, depth_total):
+    def search_alphaBeta(self, state, depth_total, start_timer):
 
         first_turn  = True
 
@@ -717,6 +734,10 @@ class AI(Agent):
                     if max_eval >= beta:
                         return max_eval
                     alpha = max(alpha, max_eval)
+                
+                if time.time() - start_timer > self.timePerMove:
+                    self.timeReached = True
+                    return max_eval
 
             tt_entry = {"depth": depth, "value": max_eval}
             if max_eval <= alpha:
@@ -768,6 +789,10 @@ class AI(Agent):
                     if alpha >= min_eval:
                         return min_eval
                     beta = min(beta, min_eval)
+                
+                if time.time() - start_timer > self.timePerMove:
+                    self.timeReached = True
+                    return min_eval
 
             tt_entry = {"depth": depth, "value": min_eval}
             if min_eval <= alpha:
@@ -779,8 +804,5 @@ class AI(Agent):
             self.TT.set(hashBoard, tt_entry)
             return min_eval
         
-        start = time.time()
         utility_state = max_value(state, - float("inf"), float("inf"), depth_total)
-        end = time.time()
-        self.total_time += end - start
         return utility_state
