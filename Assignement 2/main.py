@@ -144,11 +144,11 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
         
         if hasattr(agent_white, "nb_play"):
             mean_time = agent_white.total_time / agent_white.nb_play
-            print(f"Mean time for the agent : {mean_time}")
+            print(f"Mean time for the white agent : {mean_time}")
         
         if hasattr(agent_black, "nb_play"):
             mean_time = agent_black.total_time / agent_black.nb_play
-            print(f"Mean time for the agent : {mean_time}")
+            print(f"Mean time for the black agent : {mean_time}")
         
     except Exception as e:
         if log_file is not None:
