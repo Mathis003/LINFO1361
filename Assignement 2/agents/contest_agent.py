@@ -422,7 +422,7 @@ class AI(Agent):
         super().__init__(player, game)
         self.TT = TranspositionTable()
         self.symmetryComparer = SymmetryComparer()
-        self.max_depth = 3 # To change if needed
+        self.max_depth = 3
 
         self.total_time = 0.0
         self.nb_play = 0
@@ -432,16 +432,6 @@ class AI(Agent):
 
         self.best_iter_move = None
         self.best_iter_eval = None
-
-    # """
-    # Clear the old states of the game that are not needed anymore.
-    # The old states are the states with a number of pieces greater than the number of pieces of the current game.
-    # """
-    # def clear_oldStates(self, nb_pieces):
-    #     keys = list(self.explored.keys())
-    #     for key in keys:
-    #         if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
-    #             self.explored.pop(key, None)
 
     """
     Get the number of pieces for each player in the game.
@@ -474,8 +464,11 @@ class AI(Agent):
     The clearing of the old states is done before playing the move.
     """
     def play(self, state, remaining_time):
+        # TODO : Attention, si j'hardcode le premier coup, ça créé un bug (je dois surement initialiser qqch avant de jouer le premier coup (qui est le troisième coup))
+        # if self.nb_play == 0:
+        #     if self.player == 0:
+        #         return state.actions[0]._replace(active_board_id=0, passive_board_id=1, active_stone_id=0, passive_stone_id=1, direction=5, length=1)
         self.nb_play += 1
-        # self.clear_oldStates(self.getPieces(state.board))
         return self.ID_alphabeta(state)
     
     """
