@@ -15,8 +15,10 @@ import random
 
 from matplotlib import pyplot as plt
 
-def get_agents(args, display):
+import concurrent.futures
 
+
+def get_agents(args, display):
     def get_agent(player, agent_name):
         if agent_name == "human":
             return HumanAgent(player)
@@ -217,6 +219,18 @@ def createBarGraph(percentages):
     plt.savefig('percentage-MCTS_vs_Random.png')
 
 
+def playGame(agent_white, agent_black, args, i):
+    winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=args.logs)
+    winner_t = "White"
+    if(winner == 1):
+        winner_t = "Black"
+    elif(winner == 2):
+        winner_t = "Draw"
+
+    print(f"{i} -> Winner : {winner_t},  numer of moves : {n_moves}")
+    return winner, n_moves
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Shobu game')
     parser.add_argument('-w', '--white', type=str, default="random", help='White player ["random | human | alphabeta | mcts | agent"]')
@@ -241,15 +255,20 @@ if __name__ == "__main__":
         }
         total_moves = []
         agent_white, agent_black = get_agents(args, args.display)
-        for i in range(0, args.n):
-            if i % 25 == 0 and i > 0:
-                print(f"{i} -> White : {winners[0] / (i+1)}, Black : {winners[1] / (i+1)}, Draw : {winners[-1] / (i+1)}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
-            log_file = args.logs
-            winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file)
-            winners[winner] += 1
-            total_moves.append(n_moves)
-        
-        print(f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
+
+        with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(playGame, agent_white, agent_black, args, i): i for i in range(0, args.n)}
+
+            for future in concurrent.futures.as_completed(futures, timeout=60 * 5):
+                winner, total_move = future.result()
+                # winners[0] += winner[0]
+                # winners[1] += winner[1]
+                # winners[-1] += winner[-1]
+                winners[winner] += 1
+                total_moves.append(total_move)
+
+        print(
+            f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
 
     else:
         log_file = args.logs
