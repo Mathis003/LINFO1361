@@ -13,8 +13,8 @@ Idea to implement :
             => Try to predict if another iteration can be completed before the time runs out
             => Can use incomplete last iteration if at least one move searched
     - Transposition table with symmetries => replace existing results with new ones if TT is filled up
-    - Quiescent search : search promising moves deeper, unpromising ones less deep (avoid “horizon effect”)
-    - Parameter tuning for evaluation function – by machine learning
+    - Quiescent search : search promising moves deeper, unpromising ones less deep (avoid â€œhorizon effectâ€)
+    - Parameter tuning for evaluation function â€“ by machine learning
     - Killer move heuristic : store moves that cause beta cutoffs and try them first in the next iteration
     - Define a lookup table for the 5 / 10 first moves of the game (opening book)
 """
@@ -201,7 +201,7 @@ class SymmetryComparer:
     """
     def get_AllSymmetry(self, board, transpositionTable):
         
-        # !! Moyen de faire de la symétrie avec HOME board + OPPONENT board !! #
+        # !! Moyen de faire de la symÃ©trie avec HOME board + OPPONENT board !! #
         # !! Mais pas avec deux HOME board ou deux OPPONENT board !! #
 
         list_result = []
@@ -397,6 +397,14 @@ class SymmetryComparer:
         return bestResult, self.get_symmetricMove(bestEntry["move"], bestSymmetry)
 
 
+
+
+
+
+
+
+
+
 #################################################
 ################ == AI Player == ################
 #################################################
@@ -420,22 +428,21 @@ class AI_V1(Agent):
 
     def __init__(self, player, game):
         super().__init__(player, game)
-        self.explored = {}
+        self.TT = TranspositionTable()
         self.symmetryComparer = SymmetryComparer()
-        self.max_depth = 3 # To change if needed
+        self.max_depth = 6
 
         self.total_time = 0.0
         self.nb_play = 0
 
-    """
-    Clear the old states of the game that are not needed anymore.
-    The old states are the states with a number of pieces greater than the number of pieces of the current game.
-    """
-    def clear_oldStates(self, nb_pieces):
-        keys = list(self.explored.keys())
-        for key in keys:
-            if key[0] > nb_pieces[0] or key[1] > nb_pieces[1]:
-                self.explored.pop(key, None)
+        self.timePerMove = 20.0
+        self.timeReached = False
+
+        self.best_move = None
+        self.best_eval = None
+
+        self.best_iter_move = None
+        self.best_iter_eval = None
 
     """
     Get the number of pieces for each player in the game.
@@ -468,8 +475,12 @@ class AI_V1(Agent):
     The clearing of the old states is done before playing the move.
     """
     def play(self, state, remaining_time):
+        # TODO : Attention, si j'hardcode le premier coup, Ã§a crÃ©Ã© un bug (je dois surement initialiser qqch avant de jouer le premier coup (qui est le troisiÃ¨me coup))
+        # if self.nb_play == 0:
+        #     if self.player == 0:
+        #         return state.actions[0]._replace(active_board_id=0, passive_board_id=1, active_stone_id=0, passive_stone_id=1, direction=5, length=1)
         self.nb_play += 1
-        return self.search_alphaBeta(state)
+        return self.ID_alphabeta(state)
     
     """
     Check if the state is a cutoff state.
@@ -487,7 +498,7 @@ class AI_V1(Agent):
         player   = self.player
         opponent = 1 - player
 
-        # Avantages matériels
+        # Avantages matÃ©riels
         min_score_material_all = -12
         max_score_material_all = 12
         score_material_all = 0
@@ -594,7 +605,7 @@ class AI_V1(Agent):
         score_protection = (score_protection - min_score_protection) / (max_score_protection - min_score_protection)
         score_attack     = (score_attack - min_score_attack) / (max_score_attack - min_score_attack)
 
-        # Coefficients de pondération
+        # Coefficients de pondÃ©ration
         coeff_material     = 0.65  # A determiner
         coeff_position     = 0.25  # A determiner
         coeff_protection   = 0.05  # A determiner
@@ -604,63 +615,194 @@ class AI_V1(Agent):
         return total_score
   
 
-    # """
-    # Iteratively deepening alpha-beta search algorithm.
-    # """
-    # def iterativeDeepeningAlphaBeta(self, state):
-    #     bestEval, bestMove = - float("inf"), None
-    #     for depth in range(1, self.max_depth + 1):
-    #         currentEval, currentMove = self.choose_move(state, depth)
-    #         if bestEval < currentEval:
-    #             bestEval, bestMove = currentEval, currentMove
-    #     return bestMove
+    """
+    Iteratively deepening alpha-beta search algorithm.
+    """
+    def ID_alphabeta(self, state):
+        start = time.time()
+        self.best_move = None
+        self.timeReached = False
+        best_eval_state = - float("inf")
+        for depth in range(1, 15): # self.max_depth + 1
+            eval_state = self.search_alphaBeta(state, depth, start)
+            # print("Evaluation : ", eval_state)
+            # print(best_eval_state)
+            if eval_state > best_eval_state:
+                best_eval_state = eval_state
+                self.best_move = self.best_iter_move
+                self.best_iter_move = None
+            if self.timeReached:
+                break
+                # print("Best_move Current : ", self.best_move)
+        # print("Best_move Final : ", self.best_move)
+        # print("Length of TT : ", len(self.TT.table))
+        self.total_time += time.time() - start
+        return self.best_move
     
+
+    def capture_stone(self, state, action):
+        player = state.to_move
+        opponent = 1 - player
+
+        new_active_stone_id = action.active_stone_id + action.length * action.direction
+
+        board_active = state.board[action.active_board_id]
+        if action.length == 1:
+            if new_active_stone_id not in [5, 6, 9, 10] and new_active_stone_id in board_active[opponent]:
+                return True
+        else:
+            if new_active_stone_id in [0, 3, 12, 15]:
+                return False
+            
+            if ((action.direction == 1 and action.active_stone_id % 4 == 0) or
+                (action.direction == -1 and (action.active_stone_id + 1) % 4 == 0) or
+                (action.direction == 4 and action.active_stone_id < 4) or
+                (action.direction == -4 and action.active_stone_id > 11) or
+                (action.direction == 5 and action.active_stone_id == 0) or
+                (action.direction == -5 and action.active_stone_id == 15) or
+                (action.direction == 3 and action.active_stone_id == 12) or
+                (action.direction == -3 and action.active_stone_id == 3)):
+                return False
+            
+            nberPiecesDirection = 0
+            for i in range(1, 3):
+                if action.active_stone_id + i * action.direction in board_active[opponent]:
+                    nberPiecesDirection += 1
+            
+            if nberPiecesDirection == 1:
+                return True
+        
+        return False
+    
+
+    def moveReordering(self, state, actions):
+        capturing_actions     = [action for action in actions if self.capture_stone(state, action)]
+        non_capturing_actions = [action for action in actions if not self.capture_stone(state, action)]
+        return capturing_actions + non_capturing_actions
 
     """
     Compute the best move using the alpha-beta search algorithm with transposition table.
     """
-    def search_alphaBeta(self, state):
+    def search_alphaBeta(self, state, depth_total, start_timer):
+
+        first_turn  = True
 
         def max_value(state, alpha, beta, depth):
+            nonlocal first_turn
 
+            # hashBoard = self.hashBoard(state.board)
+            # tt_entry = self.TT.get(hashBoard)
+            # if tt_entry is not None and tt_entry['depth'] >= depth:
+            #     if tt_entry['flag'] == 'exact':
+            #         return tt_entry['value']
+            #     elif tt_entry['flag'] == 'lowerbound':
+            #         alpha = max(alpha, tt_entry['value'])
+            #     elif tt_entry['flag'] == 'upperbound':
+            #         beta = min(beta, tt_entry['value'])
+            #     if alpha >= beta:
+            #         return tt_entry['value']
+            
             if self.is_cutoff(state, depth):
-                return self.eval(state), None
-
+                eval_state = self.eval(state)
+                # tt_entry = {"depth": depth, "value": eval_state}
+                # if (eval_state <= alpha):
+                #     tt_entry["flag"] = 'lowerbound'
+                # elif (eval_state >= beta):
+                #     tt_entry["flag"] = 'upperbound'
+                # else:
+                #     tt_entry["flag"] = 'exact'
+                # self.TT.set(hashBoard, tt_entry)
+                return eval_state
+                
             max_eval = - float("inf")
-            best_action = None
-            for action in self.game.actions(state):
+
+            actions = self.game.actions(state)
+            actions = self.moveReordering(state, actions)
+
+            if first_turn and self.best_move is not None:
+                actions.remove(self.best_move)
+                actions.insert(0, self.best_move)
+                first_turn = False
+
+            for action in actions:
                 child_state = self.game.result(state, action)
-                eval_child, _ = min_value(child_state, alpha, beta, depth - 1)
+                eval_child = min_value(child_state, alpha, beta, depth - 1)
                 if eval_child > max_eval:
                     max_eval = eval_child
-                    best_action = action
+                    if depth == depth_total:
+                        self.best_iter_move = action
                     if max_eval >= beta:
-                        return max_eval, best_action
+                        return max_eval
                     alpha = max(alpha, max_eval)
+                
+                if time.time() - start_timer > self.timePerMove:
+                    self.timeReached = True
+                    return max_eval
 
-            return max_eval, best_action
+            # tt_entry = {"depth": depth, "value": max_eval}
+            # if max_eval <= alpha:
+            #     tt_entry["flag"] = "lowerbound"
+            # elif max_eval >= beta:
+            #     tt_entry["flag"] = "upperbound"
+            # else:
+            #     tt_entry["flag"] = "exact"
+            # self.TT.set(hashBoard, tt_entry)
+            return max_eval
     
 
         def min_value(state, alpha, beta, depth):
+
+            # hashBoard = self.hashBoard(state.board)
+            # tt_entry = self.TT.get(hashBoard)
+            # if tt_entry is not None and tt_entry['depth'] >= depth:
+            #     if tt_entry['flag'] == 'exact':
+            #         return tt_entry['value']
+            #     elif tt_entry['flag'] == 'lowerbound':
+            #         alpha = max(alpha, tt_entry['value'])
+            #     elif tt_entry['flag'] == 'upperbound':
+            #         beta = min(beta, tt_entry['value'])
+            #     if alpha >= beta:
+            #         return tt_entry['value']
+
             if self.is_cutoff(state, depth):
-                return self.eval(state), None
-                    
+                eval_state = self.eval(state)
+                # tt_entry = {"depth": depth, "value": eval_state}
+                # if (eval_state <= alpha):
+                #     tt_entry["flag"] = 'lowerbound'
+                # elif (eval_state >= beta):
+                #     tt_entry["flag"] = 'upperbound'
+                # else:
+                #     tt_entry["flag"] = 'exact'
+                # self.TT.set(hashBoard, tt_entry)
+                return eval_state
+  
             min_eval = float("inf")
-            best_action = None
-            for action in self.game.actions(state):
+
+            actions = self.game.actions(state)
+            actions = self.moveReordering(state, actions)
+
+            for action in actions:
                 child_state = self.game.result(state, action)
-                eval_child, _ = max_value(child_state, alpha, beta, depth - 1)
+                eval_child = max_value(child_state, alpha, beta, depth - 1)
                 if eval_child < min_eval:
                     min_eval = eval_child
-                    best_action = action
                     if alpha >= min_eval:
-                        return min_eval, best_action
+                        return min_eval
                     beta = min(beta, min_eval)
+                
+                if time.time() - start_timer > self.timePerMove:
+                    self.timeReached = True
+                    return min_eval
 
-            return min_eval, best_action
-
-        start = time.time()
-        _, action = max_value(state, - float("inf"), float("inf"), self.max_depth)
-        end = time.time()
-        self.total_time += end - start
-        return action
+            # tt_entry = {"depth": depth, "value": min_eval}
+            # if min_eval <= alpha:
+            #     tt_entry["flag"] = "lowerbound"
+            # elif min_eval >= beta:
+            #     tt_entry["flag"] = "upperbound"
+            # else:
+            #     tt_entry["flag"] = "exact"
+            # self.TT.set(hashBoard, tt_entry)
+            return min_eval
+        
+        utility_state = max_value(state, - float("inf"), float("inf"), depth_total)
+        return utility_state

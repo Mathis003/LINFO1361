@@ -1,40 +1,5 @@
-from agents.agent import Agent
-
+from agent import Agent
 import time
-
-"""
-Idea to implement :
-    - Forward pruning : prune branches that are unlikely to be good or decrease the depth of the search for these branches
-            => Maybe use ProbCut algorithm (probabilistic cut algorithm)
-    - Move ordering : rearrange nodes before exploration in minimax (best apparent move first)
-    - Iterative deepening to deal with timing (with transposition table, store best move from previous iteration to improve move ordering)
-            => With fixed time limit, last iteration must usually be aborted
-            => Always store the best move from the previous iteration in the transposition table
-            => Try to predict if another iteration can be completed before the time runs out
-            => Can use incomplete last iteration if at least one move searched
-    - Transposition table with symmetries => replace existing results with new ones if TT is filled up
-    - Quiescent search : search promising moves deeper, unpromising ones less deep (avoid “horizon effect”)
-    - Parameter tuning for evaluation function – by machine learning
-    - Killer move heuristic : store moves that cause beta cutoffs and try them first in the next iteration
-    - Define a lookup table for the 5 / 10 first moves of the game (opening book)
-"""
-
-## Variables use for the symmetries of the game board ##
-
-SAME_BOARD = 0
-
-VERTICAL_ALL          = 1
-DIAGONAL_ALL          = 2
-DIAGONAL_INVERSE__ALL = 3
-
-VERTICAL_SWITCH_HOME     = 4
-VERTICAL_SWITCH_OPPONENT = 5
-VERTICAL_SWITCH_ALL      = 6
-
-ROTATION_90_Left_ALL  = 7
-ROTATION_180_Left_ALL = 8  # = HORIZONTAL_ALL
-ROTATION_270_Left_ALL = 9
-
 
 #################################################
 ########### == Transposition Table == ###########
@@ -119,6 +84,20 @@ This class is used for comparing game state symmetries and obtaining different s
 class SymmetryComparer:
 
     """
+    Performs a switch of the colors of the stones on the game board.
+    """
+    def switchColorsStones(self, board):
+        newBoard = ""
+        for tile in board:
+            if tile == "o":
+                newBoard += "x"
+            elif tile == "x":
+                newBoard += "o"
+            else:
+                newBoard += "."
+        return newBoard
+
+    """
     Performs a left rotation of the game board.
     """
     def rotateLeftBoard(self, board):
@@ -199,208 +178,70 @@ class SymmetryComparer:
     Obtains the symmetries of the game board.
     The symmetries are obtained by applying the specific symmetry function given in parameter to the game board.
     """
-    def get_AllSymmetry(self, board, transpositionTable):
-        
-        # !! Moyen de faire de la symétrie avec HOME board + OPPONENT board !! #
-        # !! Mais pas avec deux HOME board ou deux OPPONENT board !! #
-
-        list_result = []
-
+    def get_FirstSymmetry(self, board, transpositionTable):
         first_board  = board[:16]
         second_board = board[16:32]
         third_board  = board[32:48]
         fourth_board = board[48:]
 
         # SAME_BOARD
-        self.addEntryIfStoredTT(transpositionTable, board, list_result, SAME_BOARD)
+        entry = transpositionTable.get(board)
+        if entry is not None: return entry
 
         # VERTICAL_ALL
         newBoard = self.get_vertSymmetricBoard(first_board) + self.get_vertSymmetricBoard(second_board) + self.get_vertSymmetricBoard(third_board) + self.get_vertSymmetricBoard(fourth_board)
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
 
         # DIAGONAL_ALL
         newBoard = self.get_diagSymmetricBoard(first_board) + self.get_diagSymmetricBoard(second_board) + self.get_diagSymmetricBoard(third_board) + self.get_diagSymmetricBoard(fourth_board)
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, DIAGONAL_ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
 
         # DIAGONAL_INVERSE__ALL
         newBoard = self.get_diagInverseSymmetricBoard(first_board) + self.get_diagInverseSymmetricBoard(second_board) + self.get_diagInverseSymmetricBoard(third_board) + self.get_diagInverseSymmetricBoard(fourth_board)
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, DIAGONAL_INVERSE__ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
 
         # VERTICAL_SWITCH_HOME  
         newBoard = second_board + first_board + third_board + fourth_board
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_SWITCH_HOME)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
 
         # VERTICAL_SWITCH_OPPONENT
         newBoard = first_board + second_board + fourth_board + third_board
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_SWITCH_OPPONENT)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
         
         # VERTICAL_SWITCH_ALL
         newBoard = second_board + first_board + fourth_board + third_board
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, VERTICAL_SWITCH_ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
         
         # ROTATION_90_Left_ALL
         newBoard = self.rotateLeftBoard(first_board) + self.rotateLeftBoard(second_board) + self.rotateLeftBoard(third_board) + self.rotateLeftBoard(fourth_board)
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, ROTATION_90_Left_ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
         
         # ROTATION_180_Left_ALL
         newBoard = self.get_horizSymmetricBoard(first_board) + self.get_horizSymmetricBoard(second_board) + self.get_horizSymmetricBoard(third_board) + self.get_horizSymmetricBoard(fourth_board)
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, ROTATION_180_Left_ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
         
         # ROTATION_270_Left_ALL
         newBoard = self.rotateRightBoard(first_board) + self.rotateRightBoard(second_board) + self.rotateRightBoard(third_board) + self.rotateRightBoard(fourth_board)
-        self.addEntryIfStoredTT(transpositionTable, newBoard, list_result, ROTATION_270_Left_ALL)
+        entry = transpositionTable.get(newBoard)
+        if entry is not None: return entry
         
-        return list_result
-    
-
-    """
-    Add the symmetric state to the list_result if the state is stored in the transposition table.
-    """
-    def addEntryIfStoredTT(self, transpositionTable, newBoard, list_result, symmetry):
+        newBoard = self.switchColorsStones(board)
         entry = transpositionTable.get(newBoard)
         if entry is not None:
-            list_result.append((symmetry, entry))
-    
-    """
-    Obtains the symmetric move from the move given in parameter.
-    The symmetry is the one given in parameter.
-    """
-    def get_symmetricMove(self, move, symmetry):
-
-        change_direction_vert         = {-3: -5, 5: 3, 3: 5, -5: -3, 4: 4, -4: 4, 1: -1, -1: 1}
-        change_direction_horiz        = {1: 1, -1: -1, 4: -4, -4: 4, 5: -3, -3: 5, 3: -5, -5: 3}
-        change_direction_diag         = {1: -1, -1: 1, 4: 4, -4: -4, 5: -5, -5: 5, 3: -3, -3: 3}
-        change_direction_diag_inverse = {-3: -3, 3: 3, 5: -5, -5: 5, 1: -4, -4: 1, -1: 4, 4: -1}
-        change_direction_rotatioLeft  = {4: -1, -4: 1, 1: 4, -1: -4, 5: 3, -3: 5, 3: -5, -5: -3}
-        change_direction_rotatioRight = {4: 1, -4: -1, 1: -4, -1: 4, 5: -3, -3: -5, 3: 5, -5: 3}
-
-        change_stone_id_vert          = {0: 3, 4: 7, 8: 11, 12: 15, 1: 2, 5: 6, 9: 10, 13: 14, 2: 1, 6: 5, 10: 9, 14: 13, 3: 0, 7: 4, 11: 8, 15: 12}
-        change_stone_id_horiz         = {0: 12, 1: 13, 2: 14, 3: 15, 4: 8, 5: 9, 6: 10, 7: 11, 8: 4, 9: 5, 10: 6, 11: 7, 12: 0, 13: 1, 14: 2, 15: 3}
-        change_stone_id_diag          = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
-        change_stone_id_diag_inverse  = {0: 15, 1: 11, 2: 7, 3: 3, 4: 14, 5: 10, 6: 6, 7: 2, 8: 13, 9: 9, 10: 5, 11: 1, 12: 12, 13: 8, 14: 4, 15: 0}
-        change_stone_id_rotationLeft  = {0: 12, 1: 8, 2: 4, 3: 6, 4: 13, 5: 9, 6: 5, 7: 1, 8: 14, 9: 10, 10: 6, 11: 2, 12: 15, 13: 11, 14: 7, 15: 3}
-        change_stone_id_rotationRight = {0: 3, 1: 7, 2: 11, 3: 13, 4: 2, 5: 6, 6: 10, 7: 14, 8: 1, 9: 5, 10: 9, 11: 13, 12: 0, 13: 4, 14: 8, 15: 12}
-        
-
-        if symmetry == SAME_BOARD:
-            return move
-        
-        elif symmetry == VERTICAL_ALL:
-            return move._replace(active_stone_id=change_stone_id_vert[move.active_stone_id],
-                                 passive_stone_id=change_stone_id_vert[move.passive_stone_id],
-                                 direction=change_direction_vert[move.direction])
-        
-        elif symmetry == DIAGONAL_ALL:
-            return move._replace(active_stone_id=change_stone_id_diag[move.active_stone_id],
-                                 passive_stone_id=change_stone_id_diag[move.passive_stone_id],
-                                 direction=change_direction_diag[move.direction])
-        
-        elif symmetry == DIAGONAL_INVERSE__ALL:
-            return move._replace(active_stone_id=change_stone_id_diag_inverse[move.active_stone_id],
-                                 passive_stone_id=change_stone_id_diag_inverse[move.passive_stone_id],
-                                 direction=change_direction_diag_inverse[move.direction])
-
-        elif symmetry == VERTICAL_SWITCH_HOME:
-            if move.passive_board_id == 0:
-                move = move._replace(passive_board_id=1)
-            elif move.passive_board_id == 1:
-                move = move._replace(passive_board_id=0)
+            entry["value"] = - entry["value"]
+            return entry
+        return None
             
-            if move.active_board_id == 0:
-                move = move._replace(active_board_id=1)
-            elif move.active_board_id == 1:
-                move = move._replace(active_board_id=0)
-            
-            return move
-
-        elif symmetry == VERTICAL_SWITCH_OPPONENT:
-            if move.passive_board_id == 2:
-                move = move._replace(passive_board_id=3)
-            elif move.passive_board_id == 3:
-                move = move._replace(passive_board_id=2)
-            
-            if move.active_board_id == 2:
-                move = move._replace(active_board_id=3)
-            elif move.active_board_id == 3:
-                move = move._replace(active_board_id=2)
-            
-            return move
-        
-        elif symmetry == VERTICAL_SWITCH_ALL:
-            if move.passive_board_id == 0:
-                move = move._replace(passive_board_id=1)
-            elif move.passive_board_id == 1:
-                move = move._replace(passive_board_id=0)
-            elif move.passive_board_id == 2:
-                move = move._replace(passive_board_id=3)
-            elif move.passive_board_id == 3:
-                move = move._replace(passive_board_id=2)
-            
-            if move.active_board_id == 0:
-                move = move._replace(active_board_id=1)
-            elif move.active_board_id == 1:
-                move = move._replace(active_board_id=0)
-            elif move.active_board_id == 2:
-                move = move._replace(active_board_id=3)
-            elif move.active_board_id == 3:
-                move = move._replace(active_board_id=2)
-            
-            return move
-    
-        elif symmetry == ROTATION_90_Left_ALL:
-            return move._replace(active_stone_id=change_stone_id_rotationLeft[move.active_stone_id],
-                                 passive_stone_id=change_stone_id_rotationLeft[move.passive_stone_id],
-                                 direction=change_direction_rotatioLeft[move.direction])
-
-        elif symmetry == ROTATION_180_Left_ALL:
-            return move._replace(active_stone_id=change_stone_id_horiz[move.active_stone_id],
-                                 passive_stone_id=change_stone_id_horiz[move.passive_stone_id],
-                                 direction=change_direction_horiz[move.direction])
-        
-        elif symmetry == ROTATION_270_Left_ALL:
-            return move._replace(active_stone_id=change_stone_id_rotationRight[move.active_stone_id],
-                                 passive_stone_id=change_stone_id_rotationRight[move.passive_stone_id],
-                                 direction=change_direction_rotatioRight[move.direction])
-
-        else:
-            print("Error: Symmetry not found")
-            exit(1)
-        
-            
-    """
-    Obtains the best move from the transposition table that are symmetric to the board given in parameter.
-    The best move is the one with the highest value if maximizingPlayer is True, else it is the one with the lowest value among all the symmetric state stored in the TT.
-    """
-    def getBestMove_StoredTT(self, board, transpositionTable, maximizingPlayer):
-        
-        bestResult   = - float("inf") if maximizingPlayer else float("inf")
-        bestEntry    = None
-        bestSymmetry = None
-
-        for result in self.get_AllSymmetry(board, transpositionTable):
-            
-            entry = result[1]
-            if maximizingPlayer:
-                if bestResult < entry["value"]:
-                    bestSymmetry = result[0]
-                    bestResult   = entry["value"]
-                    bestEntry    = entry
-            else:
-                if entry["value"] < bestResult:
-                    bestSymmetry = result[0]
-                    bestResult   = entry["value"]
-                    bestEntry    = entry
-        
-        if bestEntry is None:
-            return None, None
-        
-        return bestResult, self.get_symmetricMove(bestEntry["move"], bestSymmetry)
-
-
-
-
-
-
+    def getEntry_StoredTT(self, board, transpositionTable):        
+        return self.get_FirstSymmetry(board, transpositionTable)
 
 
 
@@ -428,6 +269,7 @@ class AI(Agent):
 
     def __init__(self, player, game):
         super().__init__(player, game)
+
         self.TT = TranspositionTable()
         self.symmetryComparer = SymmetryComparer()
         self.max_depth = 15
@@ -435,7 +277,7 @@ class AI(Agent):
         self.total_time = 0.0
         self.nb_play    = 0
 
-        self.timePerMove = 24.0
+        self.MaxTimeALlowedPerMove = 15.0
         self.timeReached = False
 
         self.best_move = None
@@ -445,15 +287,17 @@ class AI(Agent):
 
         self.first_turn_iter = True
 
-    """
-    Get the number of pieces for each player in the game.
-    """
-    def getPieces(self, boards):
-        nb_white_pieces, nb_black_pieces = 0, 0
-        for board in boards:
-            nb_white_pieces += len(board[0])
-            nb_black_pieces += len(board[1])
-        return (nb_white_pieces, nb_black_pieces)
+        self.currDepth = 0
+
+    # """
+    # Get the number of pieces for each player in the game.
+    # """
+    # def getPieces(self, boards):
+    #     nb_white_pieces, nb_black_pieces = 0, 0
+    #     for board in boards:
+    #         nb_white_pieces += len(board[0])
+    #         nb_black_pieces += len(board[1])
+    #     return (nb_white_pieces, nb_black_pieces)
 
     """
     Hash the game board to store it in the transposition table.
@@ -477,24 +321,23 @@ class AI(Agent):
     """
     def play(self, state, remaining_time):
         self.nb_play += 1
-        return self.ID_alphabeta(state)
+        if self.nb_play == 1 and self.player == 0:
+            return state.actions[0]._replace(active_board_id=3, passive_board_id=0, active_stone_id=0, passive_stone_id=0, direction=5, length=1)
+        return self.iterativeDeepeningAlphaBeta(state)
     
     """
     Check if the state is a cutoff state.
     """
     def is_cutoff(self, state, depth):
         return depth == 0 or self.game.is_terminal(state)
+    
+    def eval2(self, state, debug=False):
 
-    """
-    Evaluate the state using the evaluation function.
-    The evaluation function is a weighted sum of the material advantage, the positional advantage and the protection advantage.
-    """
-    def eval(self, state):
         board    = state.board
         player   = self.player
         opponent = 1 - player
 
-        # Avantages matériels
+        # Avantages matÃ©riels
         min_score_material_all = -12
         max_score_material_all = 12
         score_material_all = 0
@@ -517,6 +360,11 @@ class AI(Agent):
         elif nbPieces_min[opponent] == 0:
             return INF
 
+        # if debug:
+            # print("score_material_all : ", score_material_all)
+            # print("score_material_min : ", score_material_min)
+            # print("=======================================\n")
+
         score_material_all = (score_material_all - min_score_material_all) / (max_score_material_all - min_score_material_all)
         score_material_min = (score_material_min - min_score_material_min) / (max_score_material_min - min_score_material_min)
 
@@ -524,23 +372,23 @@ class AI(Agent):
 
         # Avantages positionnels
         score_position = 0
-        max_score_position = 24
-        min_score_position = -24
+        max_score_position = 16
+        min_score_position = -16
         good_positions = [5, 6, 9, 10]
         for i in range(4):
             positions_player   = list(board[i][player])
             positions_opponent = list(board[i][opponent])
             for position in positions_player:
                 if position in good_positions:
-                    if (i in [2, 3]):
-                        score_position += 1
                     score_position += 1
             for position in positions_opponent:
                 if position in good_positions:
-                    if (i in [0, 1]):
-                        score_position -= 1
                     score_position -= 1
 
+        # if debug:
+            # print("score_position : ", score_position)
+            # print("=======================================\n")
+        
         score_position = (score_position - min_score_position) / (max_score_position - min_score_position)
                     
         # Avantage de protection
@@ -551,6 +399,7 @@ class AI(Agent):
         max_score_attack = 32
         min_score_attack = -32
         score_attack = 0
+
 
         for i in range(4):
             positions_player   = list(board[i][player])
@@ -588,210 +437,278 @@ class AI(Agent):
                         if position + offset in positions:
                             score_protection += sign
 
+        # if debug:
+            # print("score_protection : ", score_protection)
+            # print("=======================================\n")
+        
         score_protection = (score_protection - min_score_protection) / (max_score_protection - min_score_protection)
         score_attack     = (score_attack - min_score_attack) / (max_score_attack - min_score_attack)
 
-        # Coefficients de pondération
-        coeff_material     = 0.65
-        coeff_position     = 0.25
-        coeff_protection   = 0.05
-        coeff_attack       = 0.05
+        # Coefficients de pondÃ©ration
+        coeff_material     = 0.65  # A determiner
+        coeff_position     = 0.25  # A determiner
+        coeff_protection   = 0.05  # A determiner
+        coeff_attack       = 0.05  # A determiner
 
         total_score = coeff_material * score_material + coeff_position * score_position + coeff_protection * score_protection + coeff_attack * score_attack
         return total_score
-  
 
     """
-    Iteratively deepening alpha-beta search algorithm.
+    Evaluate the state using the evaluation function.
+    The evaluation function is a weighted sum of the material advantage, the positional advantage and the protection advantage.
     """
-    def ID_alphabeta(self, state):
-        start = time.time()
-        self.best_move = None
-        self.timeReached = False
-        best_eval_state = - float("inf")
-        for depth in range(1, self.max_depth + 1):
-            self.first_turn_iter = True
-            self.search_alphaBeta(state, depth, start)
-            if self.best_iter_eval > best_eval_state:
-                best_eval_state = self.best_iter_eval
-                self.best_move = self.best_iter_move
-                self.best_iter_move = None
-                self.best_iter_eval = - float("inf")
-            if self.timeReached:
-                return self.best_move
-        self.total_time += time.time() - start
-        return self.best_move
-    
-
-    def capture_stone(self, state, action):
-        player = state.to_move
+    def eval(self, state):
+        board    = state.board
+        player   = self.player
         opponent = 1 - player
 
-        new_active_stone_id = action.active_stone_id + action.length * action.direction
-
-        board_active = state.board[action.active_board_id]
-        if action.length == 1:
-            if new_active_stone_id not in [5, 6, 9, 10] and new_active_stone_id in board_active[opponent]:
-                return True
-        else:
-            if new_active_stone_id in [0, 3, 12, 15]:
-                return False
-            
-            if ((action.direction == 1 and action.active_stone_id % 4 == 0) or
-                (action.direction == -1 and (action.active_stone_id + 1) % 4 == 0) or
-                (action.direction == 4 and action.active_stone_id < 4) or
-                (action.direction == -4 and action.active_stone_id > 11) or
-                (action.direction == 5 and action.active_stone_id == 0) or
-                (action.direction == -5 and action.active_stone_id == 15) or
-                (action.direction == 3 and action.active_stone_id == 12) or
-                (action.direction == -3 and action.active_stone_id == 3)):
-                return False
-            
-            nberPiecesDirection = 0
-            for i in range(1, 3):
-                if action.active_stone_id + i * action.direction in board_active[opponent]:
-                    nberPiecesDirection += 1
-            
-            if nberPiecesDirection == 1:
-                return True
+        if self.game.is_terminal(state):
+            return 999999999 * self.game.utility(state, self.player)
         
-        return False
-    
+        positions = {player: [list(board[i][player]) for i in range(4)], opponent: [list(board[i][opponent]) for i in range(4)]}
+        
+        def materialScore():
+            score_material_all = 0
+            min_score_material_all, max_score_material_all = -12, 12
+            nbPieces_min = [4, 4]
+            min_score_material_min, max_score_material_min = -3, 3
+            for i in range(4):
+                score_material_all += len(positions[player][i]) - len(positions[opponent][i])
+                nbPieces_min[player]   = min(len(positions[player][i]), nbPieces_min[player])
+                nbPieces_min[opponent] = min(len(positions[opponent][i]), nbPieces_min[opponent])
+            score_material_min = nbPieces_min[player] - nbPieces_min[opponent]
 
+            score_material_all = (score_material_all - min_score_material_all) / (max_score_material_all - min_score_material_all)
+            score_material_min = (score_material_min - min_score_material_min) / (max_score_material_min - min_score_material_min)
+            score_material = 0.3 * score_material_all + 0.7 * score_material_min 
+            return score_material
+        
+        def centeringPositionScore():
+            score_position = 0
+            min_score_position, max_score_position = -24, 24
+            centering_positions = [5, 6, 9, 10]
+            best_centering_positions = {0: [9, 10], 1: [5, 6]}
+            best_board = {0: [2, 3], 1: [0, 1]}
+            for i in range(4):
+                for position in positions[player][i]:
+                    if position in centering_positions:
+                        score_position += 1
+                        if (i in best_board[player]): score_position += 1
+                        if (position in best_centering_positions[player]): score_position += 2
+                for position in positions[opponent][i]:
+                    if position in centering_positions:
+                        score_position -= 1
+                        if (i in best_board[opponent]): score_position -= 1
+                        if (position in best_centering_positions[opponent]): score_position -= 2
+
+            score_position = (score_position - min_score_position) / (max_score_position - min_score_position)
+            return score_position
+
+        def extraPositionScore():
+            score_extra_position = 0
+            min_score_extra_position, max_score_extra_position = -80, 80
+            best_position = {0: [13, 14], 1: [1, 2]}
+            for i in range(4):
+                for position in positions[player][i]:
+                    passedHere = False
+                    if position == best_position[player][0]:
+                        if best_position[player][0] - 1 in positions[opponent][i]:
+                            passedHere = True
+                            score_extra_position += 5
+                        if best_position[player][0] + 1 in positions[opponent][i]:
+                            score_extra_position += 5
+                        if passedHere: score_extra_position += 10
+                    elif position == best_position[player][1]:
+                        if best_position[player][1] - 1 in positions[opponent][i]:
+                            passedHere = True
+                            score_extra_position += 5
+                        if best_position[player][1] + 1 in positions[opponent][i]:
+                            score_extra_position += 5
+                        if passedHere: score_extra_position += 10
+                for position in positions[opponent][i]:
+                    passedHere = False
+                    if position == best_position[opponent][0]:
+                        if best_position[opponent][0] - 1 in positions[player][i]:
+                            passedHere = True
+                            score_extra_position -= 5
+                        if best_position[opponent][0] + 1 in positions[player][i]:
+                            score_extra_position -= 5
+                        if passedHere: score_extra_position -= 10
+                    if position == best_position[opponent][1]:
+                        if best_position[opponent][1] - 1 in positions[player][i]:
+                            passedHere = True
+                            score_extra_position -= 5
+                        if best_position[opponent][1] + 1 in positions[player][i]:
+                            score_extra_position -= 5
+                        if passedHere: score_extra_position -= 10
+
+            score_extra_position = (score_extra_position - min_score_extra_position) / (max_score_extra_position - min_score_extra_position)
+            return score_extra_position
+
+        def interposedPositionScore():
+            score_interpose_position = 0
+            min_score_interpose_position, max_score_interpose_position = -16, 16
+            rangePositions = [i for i in range(16)]
+            offsets = [[-1, 1], [-3, 3],[-5, 5], [-4, 4]]
+            for i in range(4):
+                for position in positions[player][i]:
+                    for offsetDir in offsets:
+                        pos1 = position + offsetDir[0]
+                        pos2 = position + offsetDir[1]
+                        if (pos1 in rangePositions and pos2 in rangePositions and pos1 in positions[opponent][i] and pos2 in positions[opponent][i]): score_interpose_position += 1
+                for position in positions[opponent][i]:
+                    for offsetDir in offsets:
+                        pos1 = position + offsetDir[0]
+                        pos2 = position + offsetDir[1]
+                        if (pos1 in rangePositions and pos2 in rangePositions and pos1 in positions[player][i] and pos2 in positions[player][i]): score_interpose_position -= 1
+            
+            score_interpose_position = (score_interpose_position - min_score_interpose_position) / (max_score_interpose_position - min_score_interpose_position)
+            return score_interpose_position
+        
+        def mobilityScore():
+            min_score_mobility, max_score_mobility = -100, 100
+            score_mobility = len(state.actions) - len(self.game.compute_actions(state.board, 1 - state.to_move))
+            score_mobility = (score_mobility - min_score_mobility) / (max_score_mobility - min_score_mobility)
+            return score_mobility if self.player == state.to_move else -score_mobility
+        
+        def attackPositionScore():
+            score_attack_position = 0
+            min_score_attack_position, max_score_attack_position = -16, 16
+            best_tile =  {0: [8, 9, 10, 11, 12, 13, 14, 15], 1: {0, 1, 2, 3, 4, 5, 6, 7}}
+            for i in range(4):
+                for position in positions[player][i]:
+                    if position in best_tile[player]: score_attack_position += 1
+                for position in positions[opponent][i]:
+                    if position in best_tile[opponent]: score_attack_position -= 1
+            score_attack_position = (score_attack_position - min_score_attack_position) / (max_score_attack_position - min_score_attack_position)
+            return score_attack_position
+        
+        score_material            = materialScore()
+        score_centering           = centeringPositionScore()
+        score_extra_position      = extraPositionScore()
+        score_interposed_position = interposedPositionScore()
+        score_mobility            = mobilityScore()
+        score_attack_position     = attackPositionScore()
+
+        coeff_material            = 0.6
+        coeff_centering           = 0.1
+        coeff_extra_position      = 0.1
+        coeff_interposed_position = 0.1
+        coeff_mobility            = 0.05
+        coeff_attack_position     = 0.05
+
+        total_score = coeff_material * score_material + coeff_centering * score_centering + coeff_extra_position * score_extra_position + coeff_interposed_position * score_interposed_position + coeff_mobility * score_mobility + coeff_attack_position * score_attack_position
+        return total_score
+  
     def moveReordering(self, state, actions):
 
-        if self.first_turn_iter and self.best_move is not None:
-            actions.remove(self.best_move)
-            actions.insert(0, self.best_move)
+        def capture_stone(state, action):
+            player   = state.to_move
+            opponent = 1 - player
+            new_active_stone_id = action.active_stone_id + action.length * action.direction
+            board_active = state.board[action.active_board_id]
+
+            if new_active_stone_id not in board_active[opponent]: return False
+
+            if action.length == 1:
+                if (new_active_stone_id in [0, 3, 12, 15] or
+                    (new_active_stone_id in [1, 2] and action.active_stone_id in [4, 5, 6, 7]) or
+                    (new_active_stone_id in [13, 14] and action.active_stone_id in [8, 9, 10, 11]) or
+                    (new_active_stone_id in [4, 8] and action.active_stone_id in [1, 5, 9, 13]) or
+                    (new_active_stone_id in [7, 11] and action.active_stone_id in [2, 6, 10, 14])):
+                    return True
+            else:
+                if action.active_stone_id in [0, 3, 12, 15]: return False
+                if ((action.direction == 1 and action.active_stone_id in [1, 5, 9, 13]) or
+                    (action.direction == -1 and action.active_stone_id in [2, 6, 10, 14]) or
+                    (action.direction == 4 and action.active_stone_id in [4, 5, 6, 7]) or
+                    (action.direction == -4 and action.active_stone_id in [8, 9, 10, 11]) or
+                    (action.direction == 5 and action.active_stone_id in [4, 5, 1]) or
+                    (action.direction == -5 and action.active_stone_id in [14, 10, 11]) or
+                    (action.direction == 3 and action.active_stone_id in [7, 6, 2]) or
+                    (action.direction == -3 and action.active_stone_id in [12, 9, 8])):
+                    return True
+            return False
 
         capturing_actions     = []
         non_capturing_actions = []
-        for action in actions[1:]:
-            if self.capture_stone(state, action):
-                capturing_actions.append(action)
-            else:
-                non_capturing_actions.append(action)
+        for action in actions:
+            capturing_actions.append(action) if capture_stone(state, action) else non_capturing_actions.append(action)
         actionsReordered = capturing_actions + non_capturing_actions
         if self.first_turn_iter and self.best_move is not None:
+            actionsReordered.remove(self.best_move)
             actionsReordered.insert(0, self.best_move)
             self.first_turn_iter = False
-        else:
-            if self.capture_stone(state, actions[0]):
-                actionsReordered.insert(0, actions[0])
         return actionsReordered
 
-    """
-    Compute the best move using the alpha-beta search algorithm with transposition table.
-    """
-    def search_alphaBeta(self, state, depth_total, start_timer):
 
-        def max_value(state, alpha, beta, depth):
+    def iterativeDeepeningAlphaBeta(self, state):
+        startTimer = time.time()
 
-            # hashBoard = self.hashBoard(state.board)
-            # tt_entry = self.TT.get(hashBoard)
-            # if tt_entry is not None and tt_entry['depth'] >= depth:
-            #     if tt_entry['flag'] == 'exact':
-            #         return tt_entry['value']
-            #     elif tt_entry['flag'] == 'lowerbound':
-            #         alpha = max(alpha, tt_entry['value'])
-            #     elif tt_entry['flag'] == 'upperbound':
-            #         beta = min(beta, tt_entry['value'])
-            #     if alpha >= beta:
-            #         return tt_entry['value']
-            
-            if self.is_cutoff(state, depth):
-                eval_state = self.eval(state)
-                # tt_entry = {"depth": depth, "value": eval_state}
-                # if (eval_state <= alpha):
-                #     tt_entry["flag"] = 'lowerbound'
-                # elif (eval_state >= beta):
-                #     tt_entry["flag"] = 'upperbound'
-                # else:
-                #     tt_entry["flag"] = 'exact'
-                # self.TT.set(hashBoard, tt_entry)
-                return eval_state
-                
-            max_eval = - float("inf")
+        def alphaBetaSearch(state, alpha, beta, depth):
 
-            actions = self.moveReordering(state, self.game.actions(state))
-            for action in actions:
-                child_state = self.game.result(state, action)
-                eval_child = min_value(child_state, alpha, beta, depth - 1)
-                if eval_child > max_eval:
-                    max_eval = eval_child
-                    self.best_iter_eval = max_eval
-                    if depth == depth_total:
-                        self.best_iter_move = action
-                    if max_eval >= beta:
-                        return max_eval
+            def max_value(state, alpha, beta, depth):
+                max_eval = - float("inf")
+                actions = self.moveReordering(state, self.game.actions(state))
+                for action in actions:
+                    child_state = self.game.result(state, action)
+                    currEval = alphaBetaSearch(child_state, alpha, beta, depth - 1)
+                    if currEval > max_eval:
+                        max_eval = currEval
+                        if depth == self.currDepth: self.best_iter_move = action
+                    if max_eval >= beta: return max_eval 
                     alpha = max(alpha, max_eval)
-                
-                if time.time() - start_timer > self.timePerMove:
-                    self.timeReached = True
-                    return max_eval
-
-            # tt_entry = {"depth": depth, "value": max_eval}
-            # if max_eval <= alpha:
-            #     tt_entry["flag"] = "lowerbound"
-            # elif max_eval >= beta:
-            #     tt_entry["flag"] = "upperbound"
-            # else:
-            #     tt_entry["flag"] = "exact"
-            # self.TT.set(hashBoard, tt_entry)
-            return max_eval
-    
-
-        def min_value(state, alpha, beta, depth):
-
-            # hashBoard = self.hashBoard(state.board)
-            # tt_entry = self.TT.get(hashBoard)
-            # if tt_entry is not None and tt_entry['depth'] >= depth:
-            #     if tt_entry['flag'] == 'exact':
-            #         return tt_entry['value']
-            #     elif tt_entry['flag'] == 'lowerbound':
-            #         alpha = max(alpha, tt_entry['value'])
-            #     elif tt_entry['flag'] == 'upperbound':
-            #         beta = min(beta, tt_entry['value'])
-            #     if alpha >= beta:
-            #         return tt_entry['value']
-
-            if self.is_cutoff(state, depth):
-                eval_state = self.eval(state)
-                # tt_entry = {"depth": depth, "value": eval_state}
-                # if (eval_state <= alpha):
-                #     tt_entry["flag"] = 'lowerbound'
-                # elif (eval_state >= beta):
-                #     tt_entry["flag"] = 'upperbound'
-                # else:
-                #     tt_entry["flag"] = 'exact'
-                # self.TT.set(hashBoard, tt_entry)
-                return eval_state
-  
-            min_eval = float("inf")
-
-            actions = self.moveReordering(state, self.game.actions(state))
-            for action in actions:
-                child_state = self.game.result(state, action)
-                eval_child = max_value(child_state, alpha, beta, depth - 1)
-                if eval_child < min_eval:
-                    min_eval = eval_child
-                    if alpha >= min_eval:
-                        return min_eval
-                    beta = min(beta, min_eval)
-                
-                if time.time() - start_timer > self.timePerMove:
-                    self.timeReached = True
-                    return min_eval
-
-            # tt_entry = {"depth": depth, "value": min_eval}
-            # if min_eval <= alpha:
-            #     tt_entry["flag"] = "lowerbound"
-            # elif min_eval >= beta:
-            #     tt_entry["flag"] = "upperbound"
-            # else:
-            #     tt_entry["flag"] = "exact"
-            # self.TT.set(hashBoard, tt_entry)
-            return min_eval
+                return max_eval
         
-        utility_state = max_value(state, - float("inf"), float("inf"), depth_total)
-        return utility_state
+            def min_value(state, alpha, beta, depth):    
+                min_eval = float("inf")
+                actions = self.moveReordering(state, self.game.actions(state))
+                for action in actions:
+                    child_state = self.game.result(state, action)
+                    min_eval = min(min_eval, alphaBetaSearch(child_state, alpha, beta, depth - 1))
+                    if min_eval <= alpha: return min_eval
+                    beta = min(beta, min_eval)
+                return min_eval
+            
+            hashBoard = self.hashBoard(state.board)
+            tt_entry = self.symmetryComparer.get_FirstSymmetry(hashBoard, self.TT)
+            if tt_entry is not None and tt_entry['depth'] >= depth:
+                if tt_entry['flag'] == 'exact':
+                    return tt_entry['value']
+                elif tt_entry['flag'] == 'lowerbound':
+                    alpha = max(alpha, tt_entry['value'])
+                elif tt_entry['flag'] == 'upperbound':
+                    beta = min(beta, tt_entry['value'])
+                if alpha >= beta:
+                    return tt_entry['value']
+                
+            if time.time() - startTimer >= self.MaxTimeALlowedPerMove or self.is_cutoff(state, depth):
+                evalState = self.eval(state)
+                tt_entry = {"depth": depth, "value": evalState}
+                if (evalState <= alpha):
+                    tt_entry["flag"] = 'lowerbound'
+                elif (evalState >= beta):
+                    tt_entry["flag"] = 'upperbound'
+                else:
+                    tt_entry["flag"] = 'exact'
+                self.TT.set(hashBoard, tt_entry)
+                return evalState
+                
+            return max_value(state, alpha, beta, depth) if state.to_move == self.player else min_value(state, alpha, beta, depth)
+
+        self.best_move = None
+        self.best_iter_move = None
+        self.timeReached = False
+        best_eval_state = - float("inf")
+        for depth in range(1, self.max_depth + 1):
+            self.currDepth = depth
+            self.first_turn_iter = True
+            eval_state = alphaBetaSearch(state, - float("inf"), float("inf"), depth)
+            if eval_state > best_eval_state:
+                best_eval_state = eval_state
+                self.best_move = self.best_iter_move
+                self.best_iter_move = None
+            if self.timeReached:
+                break
+        self.total_time += time.time() - startTimer
+        return self.best_move
