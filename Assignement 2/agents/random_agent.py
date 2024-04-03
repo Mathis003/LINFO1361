@@ -11,6 +11,9 @@ Attributes:
     - game (ShobuGame): The game the agent is playing.
 """
 class RandomAgent(Agent):
+
+    def __str__(self):
+        return "RandomAgent"
     
     """
     Determines randomly the next action to take in the given state.

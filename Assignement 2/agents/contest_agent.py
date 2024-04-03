@@ -1,4 +1,4 @@
-from agent import Agent
+from agents.agent import Agent
 
 import time
 
@@ -417,6 +417,9 @@ The key of the dictionary is the number of pieces for each player
 and the value is a TranspositionTable object containing the states of the game for this number of pieces.
 """
 class AI(Agent):
+
+    def __str__(self):
+        return "contestAgent"
 
     def __init__(self, player, game):
         super().__init__(player, game)

@@ -45,6 +45,9 @@ Attributes:
 """
 class UCTAgent(Agent):
 
+    def __str__(self):
+        return "UCTAgent"
+    
     """
     Initializes a UCTAgent with a specified player, game, and number of iterations.
 

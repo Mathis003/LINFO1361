@@ -11,6 +11,9 @@ Attributes:
 """
 class AlphaBetaAgent(Agent):
 
+    def __str__(self):
+        return "AlphaBetaAgent"
+
     """
     Initializes an AlphaBetaAgent instance with a specified player, game, and maximum search depth.
 
