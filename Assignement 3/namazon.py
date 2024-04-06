@@ -139,7 +139,7 @@ path = node.path()
 # for n in path:
 #     print(n.state) # assuming that the _str_ function of state outputs the correct format
 #     print()
-print("Time: ", end_timer - start_timer)
+# print("Time: ", end_timer - start_timer)
 
 # path = node.path()
 # print("initial state")
@@ -153,3 +153,7 @@ print("Time: ", end_timer - start_timer)
 # n = path[len(path) - 1]
 # print("goal state")
 # print(n.state)
+
+for n in path:
+    print(n.state)
+    print()
