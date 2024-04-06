@@ -1,4 +1,5 @@
 from agents.agent import Agent
+import time
 
 """
 An agent that uses the alpha-beta pruning algorithm to determine the best move.
@@ -26,6 +27,11 @@ class AlphaBetaAgent(Agent):
         super().__init__(player, game)
         self.max_depth = max_depth
 
+        self.time = [0] * 10000
+        self.coup_i = 0
+
+        self.nodeExplored = 0
+
 
     """
     Determines the best action by applying the alpha-beta pruning algorithm.
@@ -40,7 +46,11 @@ class AlphaBetaAgent(Agent):
         ShobuAction: The action determined to be the best by the alpha-beta algorithm.
     """
     def play(self, state, remaining_time):
-        return self.alpha_beta_search(state)
+        start = time.time()
+        action = self.alpha_beta_search(state)
+        self.time[self.coup_i] = time.time() - start
+        self.coup_i += 1
+        return action
     
 
     """
@@ -106,6 +116,7 @@ class AlphaBetaAgent(Agent):
     def max_value(self, state, alpha, beta, depth):
 
         if self.is_cutoff(state, depth):
+            self.nodeExplored += 1
             return self.eval(state), None
 
         maxValue, bestMove = -float("inf"), None
@@ -145,6 +156,7 @@ class AlphaBetaAgent(Agent):
     def min_value(self, state, alpha, beta, depth):
 
         if self.is_cutoff(state, depth):
+            self.nodeExplored += 1
             return self.eval(state), None
 
         minValue, bestMove = float("inf"), None

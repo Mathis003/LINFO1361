@@ -1,7 +1,7 @@
 from agents.agent import Agent
 import random
 import math
-
+import time
 
 """
 Node Class
@@ -60,6 +60,11 @@ class UCTAgent(Agent):
         super().__init__(player, game)
         self.iteration = iteration
 
+        self.time = [0] * 10000
+        self.coup_i = 0
+
+        self.nodeExplored = 0
+
 
     """
     Determines the next action to take in the given state.
@@ -72,7 +77,11 @@ class UCTAgent(Agent):
         ShobuAction: The chosen action.
     """
     def play(self, state, remaining_time):
-        return self.uct(state)
+        start = time.time()
+        action = self.uct(state)
+        self.time[self.coup_i] = time.time() - start
+        self.coup_i += 1
+        return action
 
 
     """
@@ -95,11 +104,19 @@ class UCTAgent(Agent):
             child = self.expand(leaf)
             result = self.simulate(child.state)
             self.back_propagate(result, child)
+        
+        self.nodeExplored = self.total_nodes_explored(root)
 
         # Choose the action with the highest number of visits
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
 
+
+    def total_nodes_explored(self, node):
+        total = 1
+        for child in node.children:
+            total += self.total_nodes_explored(child)
+        return total
 
     """
     Selects a leaf node using the UCB1 formula to maximize exploration and exploitation.

@@ -77,4 +77,3 @@ plt.yticks(np.arange(0, len(df.index), 1), df.index, rotation=45)
 plt.xticks(np.arange(0, len(df.columns), 1), df.columns)
 plt.savefig("WinRate.pdf")
 plt.show()
-

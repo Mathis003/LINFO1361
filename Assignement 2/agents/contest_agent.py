@@ -419,13 +419,13 @@ and the value is a TranspositionTable object containing the states of the game f
 class AI(Agent):
 
     def __str__(self):
-        return "contestAgent"
+        return "ContestAgent"
 
     def __init__(self, player, game):
         super().__init__(player, game)
         self.TT = TranspositionTable()
         self.symmetryComparer = SymmetryComparer()
-        self.max_depth = 3
+        self.max_depth = 10
 
         self.total_time = 0.0
         self.nb_play = 0
@@ -435,6 +435,14 @@ class AI(Agent):
 
         self.best_iter_move = None
         self.best_iter_eval = None
+
+        self.startTime = 0.0
+        self.MaxTimeAllowedPerMove = 20.0
+
+        self.time = [0] * 10000
+        self.coup_i = 0
+
+        self.nodeExplored = 0
 
     """
     Get the number of pieces for each player in the game.
@@ -472,7 +480,11 @@ class AI(Agent):
         #     if self.player == 0:
         #         return state.actions[0]._replace(active_board_id=0, passive_board_id=1, active_stone_id=0, passive_stone_id=1, direction=5, length=1)
         self.nb_play += 1
-        return self.ID_alphabeta(state)
+        start = time.time()
+        action = self.ID_alphabeta(state)
+        self.time[self.coup_i] = time.time() - start
+        self.coup_i += 1
+        return action
     
     """
     Check if the state is a cutoff state.
@@ -611,10 +623,15 @@ class AI(Agent):
     Iteratively deepening alpha-beta search algorithm.
     """
     def ID_alphabeta(self, state):
+        self.startTime = time.time()
         self.best_move = None
         best_eval_state = - float("inf")
-        for depth in range(1, self.max_depth + 1):
+        for depth in range(1, 100):
             eval_state = self.search_alphaBeta(state, depth)
+            if depth > 3:
+                continue
+            if time.time() - self.startTime >= self.MaxTimeAllowedPerMove:
+                break
             # print("Evaluation : ", eval_state)
             if eval_state > best_eval_state:
                 best_eval_state = eval_state
@@ -659,7 +676,6 @@ class AI(Agent):
                 return True
         
         return False
-    
 
     def moveReordering(self, state, actions):
         capturing_actions     = [action for action in actions if self.capture_stone(state, action)]
@@ -689,6 +705,7 @@ class AI(Agent):
                     return tt_entry['value']
             
             if self.is_cutoff(state, depth):
+                self.nodeExplored += 1
                 eval_state = self.eval(state)
                 tt_entry = {"depth": depth, "value": eval_state}
                 if (eval_state <= alpha):
@@ -720,6 +737,8 @@ class AI(Agent):
                     if max_eval >= beta:
                         return max_eval
                     alpha = max(alpha, max_eval)
+                if time.time() - self.startTime >= self.MaxTimeAllowedPerMove:
+                    return max_eval
 
             tt_entry = {"depth": depth, "value": max_eval}
             if max_eval <= alpha:
@@ -747,6 +766,7 @@ class AI(Agent):
                     return tt_entry['value']
 
             if self.is_cutoff(state, depth):
+                self.nodeExplored += 1
                 eval_state = self.eval(state)
                 tt_entry = {"depth": depth, "value": eval_state}
                 if (eval_state <= alpha):
@@ -771,6 +791,8 @@ class AI(Agent):
                     if alpha >= min_eval:
                         return min_eval
                     beta = min(beta, min_eval)
+                if time.time() - self.startTime >= self.MaxTimeAllowedPerMove:
+                    return min_eval
 
             tt_entry = {"depth": depth, "value": min_eval}
             if min_eval <= alpha:

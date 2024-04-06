@@ -64,7 +64,6 @@ class Problem:
 
 # ______________________________________________________________________________
 
-
 class Node:
     """A node in a search tree. Contains a pointer to the parent (the node
     that this is a successor of) and to the actual state for this node. Note
@@ -185,7 +184,6 @@ def breadth_first_tree_search(problem):
     """
 
     frontier = deque([Node(problem.initial)])  # FIFO queue
-
     while frontier:
         node = frontier.popleft()
         if problem.goal_test(node.state):
@@ -228,6 +226,7 @@ def depth_first_graph_search(problem):
     while frontier:
         node = frontier.pop()
         if problem.goal_test(node.state):
+            print(len(explored), "paths have been expanded and", len(frontier), "paths remain in the frontier")
             return node
         explored.add(node.state)
         frontier.extend(child for child in node.expand(problem)
@@ -252,6 +251,7 @@ def breadth_first_graph_search(problem):
         for child in node.expand(problem):
             if child.state not in explored and child not in frontier:
                 if problem.goal_test(child.state):
+                    print(len(explored), "paths have been expanded and", len(frontier), "paths remain in the frontier")
                     return child
                 frontier.append(child)
     return None

@@ -1,8 +1,8 @@
 from agents.random_agent import RandomAgent
-from agents.human_agent import HumanAgent
 from agents.alphabeta_agent import AlphaBetaAgent
 from agents.uct_agent import UCTAgent
 from agents.contest_agent import AI
+from agents.human_agent import HumanAgent
 from shobu import ShobuGame
 
 from logs import *
@@ -12,19 +12,17 @@ import argparse
 import time
 import random
 
-import concurrent.futures
-
-
 def get_agents(args, display):
+
     def get_agent(player, agent_name):
         if agent_name == "human":
             return HumanAgent(player)
         elif agent_name == "random":
             return RandomAgent(player, ShobuGame())
         elif agent_name == "alphabeta":
-            return AlphaBetaAgent(player, ShobuGame(), 3) # 3 depth
+            return AlphaBetaAgent(player, ShobuGame(), 3)
         elif agent_name == "mcts":
-            return UCTAgent(player, ShobuGame(), 50) # 500 iterations
+            return UCTAgent(player, ShobuGame(), 500)
         elif agent_name == "agent":
             return AI(player, ShobuGame())
         else:
@@ -35,60 +33,10 @@ def get_agents(args, display):
     
     return get_agent(0, args.white), get_agent(1, args.black)
 
-
-"""
-Estimates the average branching factor of the game tree by simulating a number of games.
-
-Args:
-    game (ShobuGame): The game instance to simulate.
-    num_simulations (int): The number of games to simulate.
-
-Returns:
-    float: The estimated average branching factor of the game tree.
-"""
-def calculate_branching_factor(game, num_simulations=1000):
-
-    # Initialize the state and the branching factor
-    MAX_TURNS = 500
-    estimated_branching_factor = 0
-    init_state = game.initial
-    state = init_state
-
-    # Simulate a number of games to estimate the average branching factor
-    for _ in range(num_simulations):
-        
-        # Reset the number of turns and the branching factor
-        nb_turns = 0
-        branching_factor = 0
-
-        # Simulate a game until it reaches a terminal state
-        while not game.is_terminal(state) and nb_turns < MAX_TURNS:
-            nb_turns += 1
-            possible_actions = game.actions(state)
-            branching_factor += len(possible_actions)
-            action = random.choice(possible_actions)
-            state = game.result(state, action)
-
-        # print(f"Current branching factor: {branching_factor / nb_turns}")
-
-        # Add the current branching factor to the estimated one
-        estimated_branching_factor += branching_factor / nb_turns
-
-        # Reset the state to the initial state
-        state = init_state
-
-    # Return the average branching factor over all simulations
-    return estimated_branching_factor / num_simulations
-
-
 def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
     game = ShobuGame()
     state = game.initial
-
-    # Get the average branching factor of the game tree
-    # branching_factor = calculate_branching_factor(game, 100000)
-    # print("Average branching factor: ", branching_factor)
 
     run = 1
     logs = []
@@ -102,7 +50,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
     try:
         while not game.is_terminal(state) and run != -1 and remaining_time_0 > 0 and remaining_time_1 > 0:
-            if n_moves > 10000:
+            if n_moves > 200:
                 return -1, n_moves
             
             if run == 1:
@@ -134,18 +82,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
                 n_moves += 1
 
-            # TODO : To change to hide/see the game
-            # display = False
             if display:
                 run = update_ui(state)
-        
-        if hasattr(agent_white, "nb_play"):
-            mean_time = agent_white.total_time / agent_white.nb_play
-            print(f"Mean time for the white agent : {mean_time}")
-        
-        if hasattr(agent_black, "nb_play"):
-            mean_time = agent_black.total_time / agent_black.nb_play
-            print(f"Mean time for the black agent : {mean_time}")
         
     except Exception as e:
         if log_file is not None:
@@ -169,6 +107,37 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
         return 0, n_moves
     else:
         return 1, n_moves
+    
+
+
+"""
+Estimates the average branching factor of the game tree by simulating a number of games.
+
+Args:
+    game (ShobuGame): The game instance to simulate.
+    num_simulations (int): The number of games to simulate.
+
+Returns:
+    float: The estimated average branching factor of the game tree.
+"""
+def calculate_branching_factor(game, num_simulations=1000):
+    MAX_TURNS = 500
+    estimated_branching_factor = 0
+    init_state = game.initial
+    state = init_state
+    for _ in range(num_simulations):
+        nb_turns = 0
+        branching_factor = 0
+        while not game.is_terminal(state) and nb_turns < MAX_TURNS:
+            nb_turns += 1
+            possible_actions = game.actions(state)
+            branching_factor += len(possible_actions)
+            action = random.choice(possible_actions)
+            state = game.result(state, action)
+        # print(f"Current branching factor: {branching_factor / nb_turns}")
+        estimated_branching_factor += branching_factor / nb_turns
+        state = init_state
+    return estimated_branching_factor / num_simulations
 
 
 def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
@@ -191,19 +160,6 @@ def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
     run = 1
     while run != -1 and display:
         run = update_ui(state)
-
-
-def playGame(agent_white, agent_black, args, i):
-    winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=args.logs)
-    winner_t = "White"
-    if(winner == 1):
-        winner_t = "Black"
-    elif(winner == 2):
-        winner_t = "Draw"
-
-    print(f"{i} -> Winner : {winner_t},  numer of moves : {n_moves}")
-    return winner, n_moves
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Shobu game')
@@ -229,17 +185,16 @@ if __name__ == "__main__":
         }
         total_moves = []
         agent_white, agent_black = get_agents(args, args.display)
-
-        with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
-            futures = {executor.submit(playGame, agent_white, agent_black, args, i): i for i in range(0, args.n)}
-
-            for future in concurrent.futures.as_completed(futures, timeout=60 * 5):
-                winner, total_move = future.result()
-                # winners[0] += winner[0]
-                # winners[1] += winner[1]
-                # winners[-1] += winner[-1]
-                winners[winner] += 1
-                total_moves.append(total_move)
-
-        print(
-            f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
+        for i in range(0, args.n):
+            if i % 25 == 0 and i > 0:
+                print(f"{i} -> White : {winners[0] / (i+1)}, Black : {winners[1] / (i+1)}, Draw : {winners[-1] / (i+1)}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
+            log_file = args.logs
+            winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file)
+            winners[winner] += 1
+            total_moves.append(n_moves)
+        print(f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
+    else:
+        log_file = args.logs
+        agent_white, agent_black = get_agents(args, args.display)
+        winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file, play_time=args.time)
+        print(f"Winner: {winner}, n_moves: {n_moves}")

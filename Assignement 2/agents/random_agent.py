@@ -1,5 +1,6 @@
 from agents.agent import Agent
 import random
+import time
 
 """
 An agent that plays randomly.
@@ -11,6 +12,13 @@ Attributes:
     - game (ShobuGame): The game the agent is playing.
 """
 class RandomAgent(Agent):
+
+    def __init__(self, player, game):
+        super().__init__(player, game)
+        self.coup_i = 0
+        self.time = [0] * 10000
+
+        self.nodeExplored = 0
 
     def __str__(self):
         return "RandomAgent"
@@ -26,9 +34,11 @@ class RandomAgent(Agent):
         ShobuAction: The chosen action.
     """
     def play(self, state, remaining_time):
+        start = time.time()
         actions = self.game.actions(state)
 
         if len(actions) == 0:
             raise Exception("No actions available")
-        
+        self.time[self.coup_i] = time.time() - start
+        self.coup_i += 1
         return random.choice(actions)
