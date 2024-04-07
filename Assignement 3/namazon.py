@@ -134,7 +134,7 @@ node = depth_first_graph_search(problem)
 
 end_timer = time.perf_counter()
 
-path = node.path()
+# path = node.path()
 # print('Number of moves: ', str(node.depth))
 # for n in path:
 #     print(n.state) # assuming that the _str_ function of state outputs the correct format
@@ -154,6 +154,8 @@ path = node.path()
 # print("goal state")
 # print(n.state)
 
+path = node.path()
+print('Number of moves: ', str(node.depth))
 for n in path:
-    print(n.state)
+    print(n.state)  # assuming that the _str_ function of state outputs the correct format
     print()
