@@ -41,7 +41,7 @@ class NAmazonsProblem(Problem):
             for col in range(state.colEmpty):
                 diff_col = state.colEmpty - col
                 diff_row = abs(state.rows[col] - action)
-                if diff_row == 0 or diff_row == diff_col or diff_row == diff_col: valid_action = False; break # Same row / column or diagonal
+                if diff_row == 0 or diff_row == diff_col: valid_action = False; break # Same row or same diagonal
                 if diff_col == 1 and diff_row == 4: valid_action = False; break # Special 'knight moves' 1x4
                 if diff_col == 4 and diff_row == 1: valid_action = False; break # Special 'knight moves' 4x1
                 if diff_col == 2 and diff_row == 3: valid_action = False; break # Special 'knight moves' 2x3
@@ -61,10 +61,7 @@ class NAmazonsProblem(Problem):
     @return: The new state after applying the action.
     """
     def result(self, state, row):
-        rows = state.rows.copy()
-        rows[state.colEmpty] = row
-        state = State(rows)
-        return state
+        return State(state.rows[:state.colEmpty] + [row] + [-1 for _ in range(state.colEmpty + 1, self.N)], state.colEmpty + 1)
 
     """
     Check if a state is a goal state.
@@ -75,7 +72,7 @@ class NAmazonsProblem(Problem):
     @return: True if the state is a goal state, False otherwise.
     """
     def goal_test(self, state):
-        return True if state.colEmpty == state.N else False
+        return True if state.colEmpty == self.N else False
 
     """
     Heuristic function for the NAmazonsProblem.
@@ -99,6 +96,8 @@ class NAmazonsProblem(Problem):
                 if diff_col == 4 and diff_row == 1: conflicts += 1 # Special 'knight moves' 4x1
                 if diff_col == 3 and diff_row == 2: conflicts += 1 # Special 'knight moves' 3x2
                 if diff_col == 2 and diff_row == 3: conflicts += 1 # Special 'knight moves' 2x3
+            
+        # print(conflicts)
         return conflicts
     
 
@@ -116,10 +115,9 @@ class State:
         - N: the size of the board
         - colEmpty: the index of the first empty column
     """
-    def __init__(self, rows):
+    def __init__(self, rows, colEmpty=0):
         self.rows = rows
-        self.N = len(rows)
-        self.colEmpty = self.N if (self.rows[self.N - 1] != -1) else self.rows.index(-1)
+        self.colEmpty = colEmpty
     
     """Equality methods for comparison and hashing"""
     def __eq__(self, other):
@@ -136,11 +134,12 @@ class State:
     """String representation of the state for formatting the output"""
     def __str__(self):
         str_repr = ""
-        rows_str = ['#' * self.N] * self.N
-        for i in range(self.N):
+        size = len(self.rows)
+        rows_str = ['#' * size] * size
+        for i in range(size):
             row = self.rows[i]
             if row == -1: break # Already created the empty columns in the 'rows_str'
-            rows_str[row] = '#' * i + 'A' + '#' * (self.N - i - 1) # Replace the '#' by 'A' in the row
+            rows_str[row] = '#' * i + 'A' + '#' * (size - i - 1) # Replace the '#' by 'A' in the row
         # Create the complete string representation
         for row in rows_str: str_repr += row + '\n'
         return str_repr[:-1]

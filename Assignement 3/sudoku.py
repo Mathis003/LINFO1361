@@ -87,6 +87,7 @@ def generate_neighbor(current_solution, fixed_positions, MAX_ITER=5):
     neighbor[i][j] = new_value
     return neighbor
 
+
 """
 Get the set of fixed positions in the Sudoku board.
 
@@ -105,7 +106,6 @@ def get_fixed_positions(initial_board):
 Simulated annealing Sudoku solver.
 """
 def simulated_annealing_solver(initial_board):
-    # Get the set of fixed positions in the board
     fixed_positions = get_fixed_positions(initial_board)
 
     current_solution = [row[:] for row in initial_board]
@@ -115,11 +115,22 @@ def simulated_annealing_solver(initial_board):
     best_score = current_score
 
     temperature = 1.0
-    threshold_T = 0.0001
-    cooling_rate = 0.9999999999 # To have a very slow cooling rate (maximum iterations)
+    cooling_rate = 0.99999 # To have a very slow cooling rate (maximum iterations)
 
-    while temperature > threshold_T:
+    nbIterationsSameScore = 0
+    while temperature > 0.0001:
         try:
+
+            # If the current score has not changed for 20 iterations, restart the search (to avoid local minima)
+            if nbIterationsSameScore == 20:
+                current_solution = [row[:] for row in initial_board]
+                best_solution = current_solution
+                current_score = objective_score(current_solution)
+                best_score = current_score
+                nbIterationsSameScore = 0
+                temperature = 1.0
+                cooling_rate = 0.99999
+
             # Generate a neighbor solution
             neighbor = generate_neighbor(current_solution, fixed_positions)
 
@@ -136,12 +147,15 @@ def simulated_annealing_solver(initial_board):
             if neighbor_score < current_score or (neighbor_score > 0 and math.exp(delta / temperature) > random.random()):
                 current_solution = neighbor
                 current_score    = neighbor_score
+                nbIterationsSameScore = 0
                 if (current_score < best_score):
                     best_solution = current_solution
                     best_score    = current_score
 
             # Cool down the temperature
             temperature *= cooling_rate
+
+            nbIterationsSameScore += 1
 
         except:
             print("Break asked"); break
