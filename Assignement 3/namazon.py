@@ -47,7 +47,6 @@ class NAmazonsProblem(Problem):
                 if diff_col == 2 and diff_row == 3: valid_action = False; break # Special 'knight moves' 2x3
                 if diff_col == 3 and diff_row == 2: valid_action = False; break # Special 'knight moves' 3x2
             
-            # Add the action if it is valid
             if valid_action: actions.append(action)
         return actions
     
@@ -73,33 +72,47 @@ class NAmazonsProblem(Problem):
     """
     def goal_test(self, state):
         return True if state.colEmpty == self.N else False
+    
+    """
+    Would putting two Amazons in (row1, col1) and (row2, col2) conflict ?
+    A conflict is if the two empresses are in the same row, column or diagonal.
+    A conflict is also if the two empresses are in the same 'special knight moves' (2x3/3x2/4x1/1x4).
+
+    @param row1: The row index of the first empress.
+    @param col1: The column index of the first empress.
+    @param row2: The row index of the second empress.
+    @param col2: The column index of the second empress.
+
+    @return: True if the two empresses conflict, False otherwise.
+    """
+    def conflict(self, row1, col1, row2, col2):
+        if row1 == row2: return True # same row
+        if col1 == col2: return True # same column
+        diff_row = abs(row1 - row2)
+        diff_col = abs(col1 - col2)
+        if diff_row == diff_col: return True # same diagonal
+        if diff_row == 1 and diff_col == 4: return True # special 'knight moves' 1x4
+        if diff_row == 4 and diff_col == 1: return True # special 'knight moves' 4x1
+        if diff_row == 2 and diff_col == 3: return True # special 'knight moves' 2x3
+        if diff_row == 3 and diff_col == 2: return True # special 'knight moves' 3x2
+        return False
 
     """
     Heuristic function for the NAmazonsProblem.
-    The heuristic is the number of attacks between the empresses on the board.
+    The heuristic is the sum of conflicts between each empresses on the board and each empty tiles.
+    More conflicts means that the board is less close to a solution because we won't be able to place a lot of future actions.
     
     @param node: The node to evaluate.
     @return: The heuristic value of the node.
     """
     def h(self, node):
-        conflicts = 0
-        rows = node.state.rows
-        # Iterate over the filled column
-        for i in range(node.state.colEmpty):
-            # Iterate to the right of the i_th column (stop to the first empty column)
-            for j in range(i + 1, node.state.colEmpty):
-                diff_col = j - i
-                diff_row = abs(rows[i] - rows[j])
-                if diff_row == 0:        conflicts += 1 # Same row
-                if diff_row == diff_col: conflicts += 1 # Same diagonal
-                if diff_col == 1 and diff_row == 4: conflicts += 1 # Special 'knight moves' 1x4
-                if diff_col == 4 and diff_row == 1: conflicts += 1 # Special 'knight moves' 4x1
-                if diff_col == 3 and diff_row == 2: conflicts += 1 # Special 'knight moves' 3x2
-                if diff_col == 2 and diff_row == 3: conflicts += 1 # Special 'knight moves' 2x3
-            
-        # print(conflicts)
-        return conflicts
-    
+        num_conflicts = 0
+        # Count the number of conflicts between the empresses on the board (take into account the empty columns)
+        for (row1, col1) in enumerate(node.state.rows):
+            # Avoid counting conflicts twice with the "start" argument
+            for (row2, col2) in enumerate(node.state.rows, start=node.state.colEmpty):
+                num_conflicts += self.conflict(row1, col1, row2, col2)
+        return num_conflicts
 
 """
 State representation for the NAmazonsProblem.
@@ -121,7 +134,7 @@ class State:
     
     """Equality methods for comparison and hashing"""
     def __eq__(self, other):
-        return isinstance(other, State) and (self.rows == other.rows)
+        return isinstance(other, State) and self.rows == other.rows
 
     """Less than method for priority queue"""
     def __lt__(self, other):
@@ -159,18 +172,15 @@ def analyseSolver(N, search_function=depth_first_graph_search):
 
     # Solve the problem
     start_timer = time.perf_counter()
-    node = search_function(problem)
+    ITERATIONS = 10
+    for _ in range(ITERATIONS):
+        node = search_function(problem)
     end_timer = time.perf_counter()
 
     # Print the time and the number of moves
-    print("Time: ", end_timer - start_timer)
+    print("N: ", N)
+    print("Time: ", (end_timer - start_timer) / ITERATIONS)
     print('Number of moves: ', str(node.depth))
-
-    # For debugging purposes
-    # path = node.path()
-    # for n in path:
-    #     print(n.state)
-    #     print()
 
 """
 Analyse the time and the number of moves to solve the NAmazonsProblem for different values of N.
@@ -180,9 +190,9 @@ The results are printed in the console.
 """
 def perfs_analyser():
     N = [10, 11, 12, 13, 20, 25, 30]
+    for n in N: analyseSolver(n, astar_search)
     for n in N: analyseSolver(n, depth_first_graph_search)
-    # for n in N: analyseSolver(n, astar_search)
-    # for n in N: analyseSolver(n, breadth_first_graph_search)
+    for n in N: analyseSolver(n, breadth_first_graph_search)
 
 
 # Main function
@@ -198,7 +208,7 @@ if __name__ == "__main__":
 
     # Solve the problem
     start_timer = time.perf_counter()
-    node = astar_search(problem)
+    node = breadth_first_graph_search(problem)
     end_timer = time.perf_counter()
 
     # Print the solution

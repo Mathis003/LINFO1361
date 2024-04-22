@@ -38,7 +38,6 @@ def objective_score(board):
     conflicts = sum(getConflictsRow(i) + getConflictsColumn(i) + getConflictsSubgrid(i) for i in range(9))
     return conflicts + empty_tiles
 
-
 """
 Get the available values that can be placed in a tile of the Sudoku board without create conflicts.
 
@@ -79,13 +78,27 @@ def generate_neighbor(current_solution, fixed_positions, MAX_ITER=5):
         values = getAvailableValues(current_solution, i, j)
     if nbIteration == MAX_ITER: values = set(range(1, 10)) # If no available values, select a random value (after MAX_ITER iterations)
 
-    # Randomly select a new value for the tile from the available values
-    new_value = random.choice(list(values))
-
-    # Copy the current solution and update the value of the selected tile to create the neighbor
     neighbor = [row[:] for row in current_solution]
-    neighbor[i][j] = new_value
-    return neighbor
+    best_score = objective_score(neighbor)
+    best_neightboor = neighbor
+    for value in list(values):
+        oldValue = neighbor[i][j]
+        neighbor[i][j] = value
+        score = objective_score(neighbor)
+        if score < best_score:
+            best_score = score
+            best_neightboor = [row[:] for row in neighbor]
+        neighbor[i][j] = oldValue
+    
+    return best_neightboor
+
+    # # Randomly select a new value for the tile from the available values
+    # new_value = random.choice(list(values))
+
+    # # Copy the current solution and update the value of the selected tile to create the neighbor
+    # neighbor = [row[:] for row in current_solution]
+    # neighbor[i][j] = new_value
+    # return neighbor
 
 
 """
@@ -102,13 +115,29 @@ def get_fixed_positions(initial_board):
             if initial_board[i][j] != 0: fixed_positions.add((i, j))
     return fixed_positions
 
+
+"""
+Fill the empty tiles of the Sudoku board with random values.
+
+@param board: The Sudoku board
+@param fixed_positions: The set of fixed positions in the board
+
+@return: The Sudoku board with the empty tiles filled with random values
+"""
+def fill_board(board, fixed_positions):
+    for i in range(9):
+        for j in range(9):
+            if (i, j) not in fixed_positions and board[i][j] == 0:
+                board[i][j] = random.randint(1, 9)
+    return board
+
 """
 Simulated annealing Sudoku solver.
 """
 def simulated_annealing_solver(initial_board):
     fixed_positions = get_fixed_positions(initial_board)
-
-    current_solution = [row[:] for row in initial_board]
+    
+    current_solution = fill_board(initial_board, fixed_positions)
     best_solution = current_solution
 
     current_score = objective_score(current_solution)
@@ -117,20 +146,8 @@ def simulated_annealing_solver(initial_board):
     temperature = 1.0
     cooling_rate = 0.99999 # To have a very slow cooling rate (maximum iterations)
 
-    nbIterationsSameScore = 0
     while temperature > 0.0001:
         try:
-
-            # If the current score has not changed for 20 iterations, restart the search (to avoid local minima)
-            if nbIterationsSameScore == 20:
-                current_solution = [row[:] for row in initial_board]
-                best_solution = current_solution
-                current_score = objective_score(current_solution)
-                best_score = current_score
-                nbIterationsSameScore = 0
-                temperature = 1.0
-                cooling_rate = 0.99999
-
             # Generate a neighbor solution
             neighbor = generate_neighbor(current_solution, fixed_positions)
 
@@ -147,7 +164,6 @@ def simulated_annealing_solver(initial_board):
             if neighbor_score < current_score or (neighbor_score > 0 and math.exp(delta / temperature) > random.random()):
                 current_solution = neighbor
                 current_score    = neighbor_score
-                nbIterationsSameScore = 0
                 if (current_score < best_score):
                     best_solution = current_solution
                     best_score    = current_score
@@ -155,10 +171,9 @@ def simulated_annealing_solver(initial_board):
             # Cool down the temperature
             temperature *= cooling_rate
 
-            nbIterationsSameScore += 1
-
         except:
-            print("Break asked"); break
+            # print("Break asked");
+            break
         
     return best_solution, best_score
 

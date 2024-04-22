@@ -211,7 +211,7 @@ def depth_first_tree_search(problem):
     return None
 
 
-def depth_first_graph_search(problem):
+def depth_first_graph_search(problem, display=True):
     """
     [Figure 3.7]
     Search the deepest nodes in the search tree first.
@@ -226,7 +226,8 @@ def depth_first_graph_search(problem):
     while frontier:
         node = frontier.pop()
         if problem.goal_test(node.state):
-            print(len(explored), "paths have been expanded and", len(frontier), "paths remain in the frontier")
+            if display:
+                print(len(explored), "paths have been expanded and", len(frontier), "paths remain in the frontier")
             return node
         explored.add(node.state)
         frontier.extend(child for child in node.expand(problem)
