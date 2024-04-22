@@ -2,14 +2,13 @@
 | Conflicts |     ORIGINAL     |              LEARNT              | Progress |
 |           | Clauses Literals |   Limit Clauses Literals  Lit/Cl |          |
 ==============================================================================
-|         0 |    2360     4800 |     786       0        0     nan |  0.000 % |
-|       102 |    2360     4800 |     864     102     2209    21.7 |  0.010 % |
+|         0 |     588     1224 |     196       0        0     nan |  0.000 % |
 ==============================================================================
-restarts              : 2
-conflicts             : 127            (34334 /sec)
-decisions             : 218            (58935 /sec)
-propagations          : 3143           (849689 /sec)
-conflict literals     : 2780           (2.22 % deleted)
-CPU time              : 0.003699 s
+restarts              : 1
+conflicts             : 23             (8034 /sec)
+decisions             : 34             (11876 /sec)
+propagations          : 347            (121202 /sec)
+conflict literals     : 107            (9.32 % deleted)
+CPU time              : 0.002863 s
 
-SATISFIABLE
+UNSATISFIABLE

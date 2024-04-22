@@ -196,8 +196,12 @@ if __name__ == "__main__":
         row, column = get_val_from_index(s, size)
         grid[row][column] = 1
 
+    count = 0
     for row in grid:
         print(row)
+        for i in row:
+            if i == 1: count += 1
+    print("Number of amazons:", count)
 
     valid = verify_n_amazons(grid, fixed_amazons)
     if not valid:
