@@ -35,11 +35,11 @@
 \setenumerate[2]{labelindent=0pt,itemindent=0pt}
 
 \newcommand*\students[2]{
-\newcommand{\studenta}{#1}
-\newcommand{\studentb}{#2}
+\newcommand{\studenta}{Delsart Mathis}
+\newcommand{\studentb}{/ (\textit{Separate Duo})}
 % \gdef\@studenta{#1} \gdef\@studentb{#2}
 }
-\newcommand*\group[1]{\newcommand{\groupnumber}{#1}}
+\newcommand*\group[1]{\newcommand{\groupnumber}{13}}
 
 \newcommand*\assignment[1]{\gdef\@assignment{#1}}
 \gdef\@assignment{\ClassError{assignment}{No assignment number specified}{}}

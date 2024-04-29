@@ -1,350 +1,223 @@
 \documentclass[11pt,a4paper]{report}
 \usepackage{marvosym}
+\usepackage{hyperref}
 
-\assignment{3}
-\group{13}
-\students{Delsart Mathis}{/ (\textit{Separate Duo})}
+\assignment{4}
+\group{...}
+\students{..........}{..........}
 
 \begin{document}
 
 \maketitle
 
-\section{Search Algorithms and their relations (3 pts)}
-Consider the maze problems given on Figure 1. The goal is to find a path from \Gentsroom ~ to \EURhv ~ moving up, down, left or right. The black cells represent walls. This question must be answered by hand and doesn't require any programming.
+\section{Constraint Programming (7 pts)}
 
 \begin{enumerate}
-\item Give a consistent heuristic for this problem. Prove that it is consistent. Also prove that it is admissible. \textbf{(1 pt)}
+\item Identify the goal of each set of constraints in \texttt{sudoku.py}. You can help yourself by looking 
+at \url{https://www.pycsp.org/documentation/constraints/} to find the definition of the different constraints. \textbf{(1 pt)}
 \end{enumerate}
 
 \begin{answers}[4cm]
-\small{One possible \textit{consistent heuristic} for this problem is the \textbf{Manhattan distance} between the \textbf{current state} and the \textbf{goal state}, which measures the distance between two points using the \textbf{L1 norm}. In other words: \\ \textbf{$d(A, B) = \lvert X_B - X_A \rvert + \lvert Y_B - Y_A \rvert$}. \
-To prove its \textbf{consistency}, let's show that \textbf{for any node n}, $h(n)\leq c(n, n') + h(n')$. Intuitively, $h(n) = c(n, n') + h(n')$ if and only if n' is on the path from h(n). In all other cases, it will be a detour and we will have $h(n) < c(n, n') + h(n')$. Thus the triangle inequality is respected and therefore this \textbf{property ensures that the heuristic is consistent}. Therefore, it is also \textbf{admissible} because \textbf{\textit{consistent $\Rightarrow$ admissible}}. However, we can still demonstrate it. The \textbf{Manhattan distance is only equal to zero when $A = B$, which corresponds to the goal state}. In \textbf{all other cases}, The Manhattan distance is \textbf{positive} because physically, it's a distance and mathematically, it's a sum of absolute values. Thus, the \textbf{heuristic never overestimates the cost to reach the goal state and is therefore admissible}.}
+
+\footnotesize{The first three constraints are \textbf{\textit{'AllDifferent'}} constraints on \textbf{expressions}. This means that the expressions taken by the variables must all be different. The last one are constraints between two expressions taken by two variables.
+
+\textbf{Constraint $\#$1}: Ensure that all numbers in a \textbf{row} are \textbf{different} and \textbf{unique}. This constraint is applied to the ninth rows of the grid.
+
+\textbf{Constraint $\#$2}: Ensure that all numbers in a \textbf{column} are \textbf{different} and \textbf{unique}. This constraint is applied to the ninth columns of the grid.
+
+\textbf{Constraint $\#$3}: Ensure that all numbers in a \textbf{3x3 subgrid} are \textbf{different} and \textbf{unique}. This constraint is applied to the ninth subgrid of the grid.
+
+\textbf{Constraint $\#$4}: Ensure that all \textbf{initially placed numbers} on the grid remain the \textbf{same}.}
+
 \end{answers}
 
 
 
 \begin{enumerate}
-\setcounter{enumi}{1}
-\item Show on the left maze the states (board positions) that
-are visited when performing a uniform-cost graph search, by writing the order numbers in the relevant cells. We assume that when different states in the fringe have the smallest value, the algorithm chooses the state with the smallest coordinate $(i,j)$ ($(0,0)$ being the bottom left position, $i$ being the horizontal index and $j$ the vertical one) using a lexicographical order. \textbf{(1 pt)}
+	\setcounter{enumi}{1}
+	\item Find at least \textbf{two different sets of variables} to model the N-amazon problem.
+	For each, describe the variables that you will use to model the N-amazon problem. 
+	For each variable, describe what they represent \textbf{in one sentence}. Give their domains.
+	If you use arrays of variables, you can give one explanation for the array as a whole (and not for each of its elements), 
+	and you need to give its dimensions.
+	Choose the most appropriate set of variables. Justify your choice. \textbf{(2 pt)}
+
 \end{enumerate}
 
-\begin{answers}[5.2cm]
-% Your answer here
-\begin{center}
-\resizebox{5cm}{!}{
-\begin{tikzpicture}
-    \draw (0,0) grid (7, 7);
-   
-    \fill (2, 7) rectangle (4, 6);
-    \fill (1, 6) rectangle (2, 5);
-    \fill (2, 7) rectangle (3, 5);
-    \fill (4, 5) rectangle (6, 4);
-    \fill (5, 6) rectangle (6, 4);
-    \fill (3, 4) rectangle (4, 3);
-    \fill (2, 3) rectangle (3, 2);
-    \fill (3, 2) rectangle (5, 1);
-    \fill (5, 2) rectangle (6, 3);
-    
-    \node at (1.5, 6.5) {\Large \Gentsroom};
-    \node at (3.5, 2.5) {\Large \EURhv};
+\begin{answers}[6cm]
 
-    % Begin
-    \node at (0.5, 0.5) {\Large 14};
-    \node at (1.5, 0.5) {\Large 17};
-    \node at (2.5, 0.5) {\Large 20};
-    \node at (3.5, 0.5) {\Large 22};
-    \node at (4.5, 0.5) {\Large 24};
-    \node at (5.5, 0.5) {\Large 26};
-    \node at (6.5, 0.5) {\Large 28};
-    \node at (0.5, 1.5) {\Large 10};
-    \node at (1.5, 1.5) {\Large 15};
-    \node at (2.5, 1.5) {\Large 18};
-    % \node at (3.5, 1.5) {\Large 24}; WALL
-    % \node at (4.5, 1.5) {\Large 24}; WALL
-    \node at (5.5, 1.5) {\Large 29};
-    \node at (6.5, 1.5) {\Large 31};
-    \node at (0.5, 2.5) {\Large 7};
-    \node at (1.5, 2.5) {\Large 11};
-    % \node at (2.5, 2.5) {\Large 34}; WALL
-    \node at (3.22, 2.8) {\normalsize 37}; % GOAL
-    \node at (4.5, 2.5) {\Large 36};
-    %\node at (5.5, 2.5) {\Large }; WALL
-    \node at (6.5, 2.5) {\Large 33};
-    \node at (0.5, 3.5) {\Large 5};
-    \node at (1.5, 3.5) {\Large 8};
-    \node at (2.5, 3.5) {\Large 12};
-    % \node at (3.5, 3.5) {\Large 24}; WALL
-    \node at (4.5, 3.5) {\Large 35};
-    \node at (5.5, 3.5) {\Large 34};
-    \node at (6.5, 3.5) {\Large 32};
-    \node at (0.5, 4.5) {\Large 4};
-    \node at (1.5, 4.5) {\Large 6};
-    \node at (2.5, 4.5) {\Large 9};
-    \node at (3.5, 4.5) {\Large 13};
-    % \node at (4.5, 4.5) {\Large 24}; WALL
-    % \node at (5.5, 4.5) {\Large 24}; WALL
-    \node at (6.5, 4.5) {\Large 30};
-    \node at (0.5, 5.5) {\Large 3};
-    % \node at (1.5, 5.5) {\Large 24}; WALL
-    % \node at (2.5, 5.5) {\Large 24}; WALL
-    \node at (3.5, 5.5) {\Large 16};
-    \node at (4.5, 5.5) {\Large 19};
-    % \node at (5.5, 5.5) {\Large 24}; WALL
-    \node at (6.5, 5.5) {\Large 27};
-    \node at (0.5, 6.5) {\Large 2};
-    \node at (1.22, 6.8) {\normalsize 1}; % PERSON
-    % \node at (2.5, 6.5) {\Large 24}; WALL
-    % \node at (3.5, 6.5) {\Large 24}; WALL
-    \node at (4.5, 6.5) {\Large 21};
-    \node at (5.5, 6.5) {\Large 23};
-    \node at (6.5, 6.5) {\Large 25};
-    % End
-\end{tikzpicture}
+\footnotesize{
+The first choice is \textbf{\textit{Individual Variables (One for Each Cell)}}. In this case, the variables are $x_{i,j}$, where $i$ and $j$ represent the row and column indices respectively. $x_{i,j}$ represents whether an amazon is placed in cell $(i,j)$ of the chessboard. The domain is therefore $\{0, 1\}$, where 0 represents no amazon and 1 represents an amazon. There are thus $n^2$ variables (n = size of chessboard) with 2 possible values for each variable. There are therefore $2^{n^2}$ states as a result.
+
+The second choice is \textbf{\textit{Array Variables (One for Each Column)}}. The variables are $x_i$, where $i$ represents the column index. $x_i$ represents the row index where an amazon is placed in column $i$ of the chessboard. The domain is therefore $\{-1, 0, 1, 2, ..., n - 1\}$, where each value represents the row index of the amazon in that column. Here, -1 represents no amazon placed in the column. There are thus $n$ variables with $n$ possible values for each variable (n = size of chessboard). There are therefore $n^n$ states as a result.
+
+The \textbf{second model is superior for CSP} because it involves \textbf{fewer variables}, and the \textbf{domain} of each variable can be \textbf{easily reduced} compared to the first model. $2^{n^2}$ is \textbf{much worse than} $n^n$! This results in a \textbf{smaller search space}. Additionally, it allows for the definition of simpler and more effective constraints to ensure that each amazon is placed correctly and that there are no conflicts between the amazons. For instance, the constraint "only one amazon per row" can be easily expressed using the \textbf{AllDifferent} constraint on the array of variables (see next questions).
 }
-\end{center}
+
 \end{answers}
 
-
-
 \begin{enumerate}
-\setcounter{enumi}{2}
-\item Show on the right maze the board positions visited by $A^{\star}$ graph search with a manhattan distance heuristic (ignoring walls), by writing the order numbers in the relevant cells. A state is visited when it is selected in the fringe and expanded. When several states have the smallest path cost, they are visited in the same lexicographical order as the one used for uniform-cost graph search. \textbf{(1 pt)}
+	\setcounter{enumi}{2}
+	\item  Give the constraints that you will use to model the N-amazon problem.
+	For each constraint, also describe what it enforces.
+	Your model must take account of the already placed amazons. \textbf{(2 pt)}
+
 \end{enumerate}
 
-\begin{answers}[5.2cm]
-% Your answer here
-\begin{center}
-\resizebox{5cm}{!}{
-\begin{tikzpicture}
-    \draw (0,0) grid (7, 7);
-   
-    \fill (2, 7) rectangle (4, 6);
-    \fill (1, 6) rectangle (2, 5);
-    \fill (2, 7) rectangle (3, 5);
-    \fill (4, 5) rectangle (6, 4);
-    \fill (5, 6) rectangle (6, 4);
-    \fill (3, 4) rectangle (4, 3);
-    \fill (2, 3) rectangle (3, 2);
-    \fill (3, 2) rectangle (5, 1);
-    \fill (5, 2) rectangle (6, 3);
-      
-    \node at (1.5, 6.5) {\Large \Gentsroom};
-    \node at (3.5, 2.5) {\Large \EURhv};
+\begin{answers}[10cm]
 
-    % Begin
-    % J'avais ça avant
-    % \node at (0.5, 0.5) {\Large 20};
-    % \node at (1.5, 0.5) {\Large 17};
-    % \node at (2.5, 0.5) {\Large 18};
-    % \node at (3.5, 0.5) {\Large 19};
-    \node at (0.5, 0.5) {\Large 17};
-    \node at (1.5, 0.5) {\Large 18};
-    \node at (2.5, 0.5) {\Large 19};
-    \node at (3.5, 0.5) {\Large 20};
-    \node at (4.5, 0.5) {\Large 22};
-    \node at (5.5, 0.5) {\Large 24};
-    \node at (6.5, 0.5) {\Large 27};
-    \node at (0.5, 1.5) {\Large 13};
-    \node at (1.5, 1.5) {\Large 14};
-    \node at (2.5, 1.5) {\Large 15};
-    % \node at (3.5, 1.5) {\Large 24}; WALL
-    % \node at (4.5, 1.5) {\Large 24}; WALL
-    \node at (5.5, 1.5) {\Large 25};
-    \node at (6.5, 1.5) {\Large 28};
-    \node at (0.5, 2.5) {\Large 6};
-    \node at (1.5, 2.5) {\Large 7};
-    % \node at (2.5, 2.5) {\Large 34}; WALL
-    \node at (3.22, 2.8) {\normalsize 37}; % GOAL
-    \node at (4.5, 2.5) {\Large 36};
-    %\node at (5.5, 2.5) {\Large }; WALL
-    \node at (6.5, 2.5) {\Large 29};
-    \node at (0.5, 3.5) {\Large 5};
-    \node at (1.5, 3.5) {\Large 8};
-    \node at (2.5, 3.5) {\Large 9};
-    % \node at (3.5, 3.5) {\Large 24}; WALL
-    \node at (4.5, 3.5) {\Large 35};
-    \node at (5.5, 3.5) {\Large 34};
-    \node at (6.5, 3.5) {\Large 33};
-    \node at (0.5, 4.5) {\Large 4};
-    \node at (1.5, 4.5) {\Large 10};
-    \node at (2.5, 4.5) {\Large 11};
-    \node at (3.5, 4.5) {\Large 12};
-    % \node at (4.5, 4.5) {\Large 24}; WALL
-    % \node at (5.5, 4.5) {\Large 24}; WALL
-    \node at (6.5, 4.5) {\Large 32};
-    \node at (0.5, 5.5) {\Large 3};
-    % \node at (1.5, 5.5) {\Large 24}; WALL
-    % \node at (2.5, 5.5) {\Large 24}; WALL
-    \node at (3.5, 5.5) {\Large 16};
-    \node at (4.5, 5.5) {\Large 21};
-    % \node at (5.5, 5.5) {\Large 24}; WALL
-    \node at (6.5, 5.5) {\Large 31};
-    \node at (0.5, 6.5) {\Large 2};
-    \node at (1.22, 6.8) {\normalsize 1}; % PERSON
-    % \node at (2.5, 6.5) {\Large 24}; WALL
-    % \node at (3.5, 6.5) {\Large 24}; WALL
-    \node at (4.5, 6.5) {\Large 23};
-    \node at (5.5, 6.5) {\Large 26};
-    \node at (6.5, 6.5) {\Large 30};
-    % End
-\end{tikzpicture}
+\small{The \textbf{\textit{first constraint}} \textbf{($\forall (i, j) \in$ placed\_amazons : $x[j] == i$)} ensures that the positions of the already placed amazons are respected in the final solution.\par
+The \textbf{\textit{second constraint}} \textbf{($\forall i \in \{0, 1, \dots, \text{{size}}-1\} : x[i] \neq -1$)} ensures that the total number of amazons placed on the chessboard is equal to the size of the chessboard. There must be exactly 'size' amazons placed. Here, -1 represents no amazon in the column.\par
+
+The \textbf{\textit{third constraint}} \textbf{(\textit{AllDifferent}}($x$)) ensures that there is only one amazon per row on the chessboard. This constraint guarantees that no row contains more than one amazon.\par
+
+The \textbf{\textit{fourth constraint}} is implicit in the problem modeling and therefore does not need to be explicitly stated in the CSP. It ensures that there is only one amazon per column.\par
+
+The \textbf{\textit{fifth constraint}} \textbf{($\forall i, j \in \{0, 1, \dots, \text{{size}}-1\} : i \neq j \Rightarrow |x[i] - x[j]| \neq |i - j|$)} checks that there is only one amazon on each diagonal of the chessboard. This constraint verifies that the absolute difference between the positions of the amazons on the horizontal axis is different from the absolute difference between their positions on the vertical axis.\par
+
+The \textbf{\textit{sixth}} and \textbf{\textit{seventh constraints}} ensure the validity of the 3x2 and 4x1 moves. This means that no amazon can be placed in a way that threatens another amazon on a movement of 3 squares horizontally (resp. vertically) and 2 squares vertically (resp. horizontally), or on a movement of 4 squares horizontally (resp. vertically) and 1 square vertically (resp. horizontally).
+
+These constraints are defined as follows:
+
+\textbf{($\forall i, j \in \{0, 1, \dots, \text{{size}}-1\} : |i - j| = 2 \Rightarrow |x[i] - x[j]| \neq 3$}
+
+\textbf{($\forall i, j \in \{0, 1, \dots, \text{{size}}-1\} : |i - j| = 3 \Rightarrow |x[i] - x[j]| \neq 2$}
+
+\textbf{($\forall i, j \in \{0, 1, \dots, \text{{size}}-1\} : |i - j| = 1 \Rightarrow |x[i] - x[j]| \neq 4$}
+
+\textbf{($\forall i, j \in \{0, 1, \dots, \text{{size}}-1\} : |i - j| = 4 \Rightarrow |x[i] - x[j]| \neq 1$}
+
+You can review the submitted code on Inginious to see the Python implementation.
 }
-\end{center}
+
 \end{answers}
-
-
-
-
-\section{N-Amazons problem (8 pts)}
 
 \begin{enumerate}
-  \item Model the N problem as a search problem; describe: \textbf{(2 pts)}
-		\begin{itemize}
-			\item States
-			\item Initial state
-			\item Actions / Transition model
-			\item Goal test
-			\item Path cost function
-		\end{itemize}
+	\setcounter{enumi}{3}
+	\item Modify the \texttt{amazons\_cp.py} file to implement your model.
+	Be careful to have the right format for your solution. 
+	Your program will be evaluated on 10 instances of which 5 are hidden. 
+	We expect you to solve all the instances.
+	An unsatisfiable instance is considered as solved if the solver returns \textit{"UNSAT"}. \textbf{(2 pt)}
 \end{enumerate}
 
-\begin{answers}[8cm]
-\small{$\bullet$ A \textbf{\textit{state}} can be represented as an N x N grid, where each square can either be occupied by an Amazon (symbolized by 'A') or be empty (symbolized by $'\#'$). While this method is intuitive, it requires storing $N^2$ elements in memory for each state. A more efficient approach is to represent a state as a list of N elements, where each index corresponds to a column and the value associated with that index represents the row where an Amazon is placed in that column. A value of -1 indicates that no Amazon is placed in that column. \\
-$\bullet$ The \textbf{\textit{initial state}} is a list of N elements initialised to -1 because there are initially no Amazons on the board. \\
-$\bullet$ \textbf{\textit{Actions}} involve placing an Amazon in the first empty column of the grid, ensuring that the Amazon is positioned in a square where no attacks occur. In other words, an action entails placing an integer between 0 and N - 1 in the first index of the list where the current value is -1. Only integers that avoid conflicts between Amazons are considered as valid actions. An attack conflict arises when one Amazon threatens another, indicating they share the same row, column (impossible with the Problem modeling), diagonal, or occupy specific squares on the board. These squares correspond to the extended knight's moves: either 3 tiles in one direction followed by 2 tiles in another, or 4 tiles in one direction followed by 1 tile in another. \\
-$\bullet$ The \textbf{\textit{transition model}} entails placing the row index (specified by the action) representing a new Amazon into the first element of the list where the value is currently equal to -1. \\
-$\bullet$ The \textbf{\textit{goal test}} involves checking if the last element of the list contains an integer between 0 and N - 1 (different of -1). If so, it means that all Amazons have been placed on the board. \\
-$\bullet$ The \textbf{\textit{path cost function}} can be defined as the total number of Amazons placed on the board. Each placement of an Amazon incurs a unit cost, and the total path cost is the sum of these individual placement costs. The \textbf{optimal cost} is thus \textbf{N}.}
-\end{answers}
+\section{Propositional Logic (8 pts)}
 
+\begin{enumerate}
+	\item For each sentence, give its number of valid interpretations i.e., the number of times the sentence is true 
+	(considering for each sentence {\bf all the proposition variables} $A$, $B$, $C$ and $D$). \textbf{(1 pt)}
+\end{enumerate}
+
+\begin{answers}[4cm]
+I reached these conclusions through logical deduction and then confirmed them using a Python script. The script iterated through all possible interpretations (16 in this case, due to the 4 variables) and tallied the number of valid interpretations, yielding the same result. \\
+$\neg ( A \land B) \lor (\neg B \land C)$: 12
+
+$(\neg A \lor B) \Rightarrow C$: 10
+
+$( A \lor \neg B) \land (\neg B \Rightarrow \neg C) \land \neg (D \Rightarrow \neg A)$: 3
+\end{answers}
 
 \newpage
 \begin{enumerate}
-\setcounter{enumi}{1}
-\item Give an upper bound on the number of different states for an N-Amazons problem with N=n. Justify your answer precisely. \textbf{(0.5 pt)}
+	\setcounter{enumi}{1}
+	\item Identify the goal of each set of clauses defined in \texttt{graph\_coloring.py}. \textbf{(1 pt)}
 \end{enumerate}
 
-\begin{answers}[5cm]
-\small{To calculate the total number of possible configurations for the N-Amazons problem on a board of \textbf{size n x n}, we consider that each Amazon \textbf{can be placed in any of the n rows for each column, without any restrictions}. In other words, we do not take into account the constraint that there can be no attack conflicts between the Amazons placed on the board.
-Hence, the \textbf{total number of possible configurations} is simply \textbf{$n^n$}, as \textbf{for each column}, there are \textbf{n available squares to place an Amazon}. The more mathematical explanation is as follows. The formula $n^n$ represents a form of permutation, where each element \textbf{can be chosen from n possible choices, and this is repeated n times}. This formula is used in the context of \textbf{arrangements with repetition}. \textbf{Another upper bound} that is more precise is \textbf{n!}, as we know that the \textbf{Amazons cannot be placed in the same row}. Once an Amazon is placed in a row, that row cannot be used again. Therefore, for the first action, there are n possibilities, then n-1 possibilities, n-2, and so on. Hence, a more precise upper bound is indeed n!. To find these upper bounds, I \textbf{relax the problem} (remove a constraint). \textbf{\textit{The more we relax the problem, the less precise the upper bound becomes}}.}
+\begin{answers}[4cm]
+\footnotesize
+{
+\textbf{Clauses #1}: This clause ensures that \textbf{a node is colored with at least one color}. It is \textbf{true if at least one color is assigned to the node}, which is represented by positive literals for each possible color. This clause is applied to each node, ensuring that \textbf{at least one (1, 2, 3, ...) color is chosen} for each node.
+
+\textbf{Clauses #2}: This clause \textbf{prevents a node from being colored with two different colors}. It is \textbf{true if at most one color is assigned to the node}, which is represented by negative literals for each pair of possible colors. This clause is applied to each node, ensuring that a node is assigned with \textbf{at most one color (0 or 1)}.
+
+\textbf{Clauses #3}: This clause ensures that \textbf{two adjacent nodes are not colored with the same color}. It is \textbf{true if the color assigned to the adjacent nodes is not the same}, which is represented by negative literals for each possible color between each adjacent nodes. This clause is applied to each edge and for each color, thus avoiding color conflicts between adjacent nodes.
+}
 
 \end{answers}
 
-
-
 \begin{enumerate}
-\setcounter{enumi}{2}
-\item Give an admissible heuristic for a N=n. Prove that it is admissible. What is its complexity ? \textbf{(1 pts)}
+	\setcounter{enumi}{2}
+	\item Explain how you can express the N-amazons problem with propositional logic. For each sentence, give its meaning.
+	Your model must take account of the already placed amazons. \textbf{(2 pt)}
 \end{enumerate}
 
-\begin{answers}[5cm]
-\footnotesize{I have opted for a \textbf{\textit{heuristic}} that minimizes conflicts between each already placed Amazon on the chessboard and the empty tiles in the remaining columns (= empty columns). For each attack by an Amazon, the \textit{heuristic} score is incremented by 1. Hence, this \textit{heuristic} effectively represents the number of tiles that are under attack by the already placed Amazons, making it impossible to place a new Amazon on those tiles. It's important to note that a single tile can be attacked by multiple Amazons, resulting in multiple conflicts for that tile. Moreover, this heuristic doesn't take into account the conflicts between each Amazon already placed because, by construction of the problem, each action consist to place a new Amazon without creating a conflict (see question \textit{2.1}).
+\begin{answers}[10cm]
+\small
+{
+To express the N-amazons problem using propositional logic, we define the proposition:\par
+$X_{ij}$ $:=$ \textit{there is an amazon in the square at row i and column j}. \\
 
-This \textit{heuristic} is \textbf{\textit{admissible}} because its \textbf{minimum score is 0 and is only reached when all the columns are filled}. \textbf{As soon as a column is not filled, the \textit{heuristic} score is greater than 0} because there is at least $n - 1$ conflicts since two Amazons cannot be on the same row, demonstrating that the \textbf{\textit{heuristic} never overestimates the cost to reach a goal state}. Thus, this \textit{heuristic} is indeed \textbf{\textit{admissible}}.
+1. \textbf{Already Placed Amazons}:\par 
+We assert the existence of already placed amazons by asserting the truth of the $X_{ij}$ proposition for those specific tiles $(i, j)$.
 
-The time complexity of this \textit{heuristic} is $\mathcal{O}(x*(n-x)*n)$, where \textbf{x} is the \textbf{number of Amazons already placed on the chessboard} and \textbf{n} is \textbf{the size of the chessboard}. An \textbf{upper bound} on this complexity is therefore $\mathcal{O}(n^3)$.}
+2. \textbf{At Least One Amazon per Row and Column}:\par 
+For each row $i$, we assert that there exists at least one tile $(i, j)$ such that $X_{ij}$ is true. Similarly, for each column $j$, we assert the existence of at least one tile $(i, j)$ such that $X_{ij}$ is true.
+
+3. \textbf{No Two Amazons on the Same Row or Column}:\par 
+For each row $i$, we assert that for any pair of distinct tiles $(i, j)$ and $(i, k)$, if $X_{ij}$ is true, then $X_{ik}$ must be false, and vice versa. Similarly, for each column $j$, we assert the same condition for pairs of distinct tiles $(i, j)$ and $(k, j)$.
+
+4. \textbf{At Most One Amazon per Diagonal}:\par
+For each pair of cells where the absolute difference in their horizontal position matches the absolute difference in their vertical position, we establish a condition such that if one cell implies $X_{ij}$ to be true, then the other must be false. This ensures that two amazons will not be on the same diagonal.
+
+5. \textbf{At Most One Amazon per 3x2 Move and 4x1 Move}:\par Similarly, For each pair of cells where the absolute difference in their horizontal position matches the value 3 (resp. 2, 4, 1) and the absolute difference in their vertical position matches the value 2 (resp. 3, 1, 4), we establish a condition such that if one cell implies $X_{ij}$ to be true, then the other must be false. This ensures that two amazons will not be on two tiles that attack each other by the 3x2 Move or the 4x1 Move. \\
+
+You can review the submitted code on Inginious to see the Python implementation.
+}
+\end{answers}
+\newpage
+
+\begin{enumerate}
+	\setcounter{enumi}{3}
+	\item Translate your model into Conjunctive Normal Form (CNF). \textbf{(2 pt)}
+\end{enumerate}
+
+\begin{answers}[10cm]
+
+\tiny
+{
+This is all the clauses to define the N-amazons problem with propositional logic. n represents the size of the chessboard minus 1.
+\vspace{-0.4cm}
+\begin{align*}
+&1. \quad \bigwedge\limits_{(i, j) \in placed\_amazons} X_{ij} \\
+&2. \quad \Bigg( \bigwedge\limits_{i=0}^{n} \bigvee\limits_{j=0}^{n} (X_{ij}) \Bigg) \land \Bigg( \bigwedge\limits_{j=0}^{n} \bigvee\limits_{i=0}^{n} (X_{ij}) \Bigg) \\
+&3. \quad \Bigg( \bigwedge\limits_{i=0}^{n} \bigwedge\limits_{\substack{j=0 \\ k=0 \\ j \neq k}}^{n} (\neg X_{ij} \lor \neg X_{ik}) \Bigg) \land \Bigg( \bigwedge\limits_{j=0}^{n} \bigwedge\limits_{\substack{i=0 \\ k=0 \\ i \neq k}}^{n} (\neg X_{ij} \lor \neg X_{kj}) \Bigg) \\
+&4. \quad \Bigg( \bigwedge\limits_{i=n}^{0} \bigwedge\limits_{j=0}^{n-i} \bigwedge\limits_{k=j+1}^{n-i} (\neg X_{ij} \lor \neg X_{i+j,i+k}) \Bigg) \land \Bigg( \bigwedge\limits_{i=n}^{0} \bigwedge\limits_{j=0}^{i} \bigwedge\limits_{k=j+1}^{i} (\neg X_{ij} \lor \neg X_{i-j,i-k}) \Bigg) \\
+&5. \quad \Bigg( \bigwedge\limits_{j=1}^{n} \bigwedge\limits_{i=0}^{j} \bigwedge\limits_{k=i+1}^{j} (\neg X_{ij} \lor \neg X_{i+j,i-k}) \Bigg) \land \Bigg( \bigwedge\limits_{j=1}^{n} \bigwedge\limits_{i=0}^{j} \bigwedge\limits_{k=i+1}^{j} (\neg X_{ij} \lor \neg X_{i-j,i+k}) \Bigg) \\
+&6. \quad \bigwedge\limits_{i=0}^{n} \bigwedge\limits_{j=0}^{n} \Bigg(
+\Bigg( \bigwedge\limits_{\substack{i+3 \leq n \\ j+2 \leq n}} (\neg X_{ij} \lor \neg X_{i+3,j+2}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i+3 \leq n \\ j-2 \geq 0}} (\neg X_{ij} \lor \neg X_{i+3,j-2}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-3 \geq 0 \\ j+2 \leq n}} (\neg X_{ij} \lor \neg X_{i-3,j+2}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-3 \geq 0 \\ j-2 \geq 0}} (\neg X_{ij} \lor \neg X_{i-3,j-2}) \Bigg) \Bigg) \\
+&7. \quad \bigwedge\limits_{i=0}^{n} \bigwedge\limits_{j=0}^{n} \Bigg(
+\Bigg( \bigwedge\limits_{\substack{i+2 \leq n \\ j+3 \leq n}} (\neg X_{ij} \lor \neg X_{i+2,j+3}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i+2 \leq n \\ j-3 \geq 0}} (\neg X_{ij} \lor \neg X_{i+2,j-3}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-2 \geq 0 \\ j+3 \leq n}} (\neg X_{ij} \lor \neg X_{i-2,j+3}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-2 \geq 0 \\ j-3 \geq 0}} (\neg X_{ij} \lor \neg X_{i-2,j-3}) \Bigg) \Bigg) \\
+&8. \quad \bigwedge\limits_{i=0}^{n} \bigwedge\limits_{j=0}^{n} \Bigg(
+\Bigg( \bigwedge\limits_{\substack{i+4 \leq n \\ j+1 \leq n}} (\neg X_{ij} \lor \neg X_{i+4,j+1}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i+4 \leq n \\ j-1 \geq 0}} (\neg X_{ij} \lor \neg X_{i+4,j-1}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-4 \geq 0 \\ j+1 \leq n}} (\neg X_{ij} \lor \neg X_{i-4,j+1}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-4 \geq 0 \\ j-1 \geq 0}} (\neg X_{ij} \lor \neg X_{i-4,j-1}) \Bigg) \Bigg) \\
+&9. \quad \bigwedge\limits_{i=0}^{n} \bigwedge\limits_{j=0}^{n} \Bigg(
+\Bigg( \bigwedge\limits_{\substack{i+1 \leq n \\ j+4 \leq n}} (\neg X_{ij} \lor \neg X_{i+1,j+4}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i+1 \leq n \\ j-4 \geq 0}} (\neg X_{ij} \lor \neg X_{i+1,j-4}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-1 \geq 0 \\ j+4 \leq n}} (\neg X_{ij} \lor \neg X_{i-1,j+4}) \Bigg) \land
+\Bigg( \bigwedge\limits_{\substack{i-1 \geq 0 \\ j-4 \geq 0}} (\neg X_{ij} \lor \neg X_{i-1,j-4}) \Bigg) \Bigg) \\
+\end{align*}
+
+\vspace{-0.2cm}
+The CNF is defined as $Clause\_1 \land Clause\_2 \land Clause\_3 \land Clause\_4 \land ... \land Clause\_9$.
+}
+
 \end{answers}
 
 \begin{enumerate}
-\setcounter{enumi}{4}
-\item \textbf{Implement} your solver. Extend the \emph{Problem} class and implement 
-		the necessary methods and other class(es) if necessary.  \textbf{(0.5 pt)}
-\item \textbf{Experiment}, compare and analyze informed (\emph{astar\_graph\_search}), uninformed \\
-    (\emph{breadth\_first\_graph\_search} and \emph{depth\_first\_graph\_search}) graph search of aima-python3 on N = [10, 11, 12, 13, 20, 25, 30]. \textbf{(3 pts for the whole question)}
-		
-		Report in a table the time and the number of explored nodes and the number of 
-		steps to reach the solution.
-		
-		Are the number of explored nodes always smaller with 
-		\emph{astar\_graph\_search}? 
-		What about the computation time? 
-		Why? 
-		 
-		 When no solution can be found by a strategy in a reasonable time (say \textbf{3 
-		 min}), indicate the reason (time-out and/or exceeded the memory).
+	\setcounter{enumi}{4}
+	\item Modify the function {\tt get\_expression(size)} in \texttt{amazon\_sat.py} such that it outputs a list
+	of clauses modeling the n-amazons problem for the given input.
+	The file \texttt{amazons\_sat.py} is the \emph{only} file that you need to modify to solve this problem. 
+	Your program will be evaluated on 10 instances of which 5 are hidden. We expect you to solve all the instances.
+	An unsatisfiable instance is considered as solved if the solver returns \textit{"UNSAT"}. \textbf{(2 pt)}
 \end{enumerate}
 
-\begin{answers}[8cm]
-\small{Firstly, it's noticeable that the \textbf{number of steps} is equivalent to the \textbf{size of the chessboard for all searches}, which is expected due to the construction of the problem discussed in question \textit{2.1}.
-
-Next, it can be observed that the \textbf{\textit{execution time}} of A* is significantly \textbf{smaller} compared to algorithms like BFS\_graph or DFS\_graph. The reason for this is that \textbf{A* is guided by a heuristic and is therefore an informed search}. It doesn't blindly search the entire search tree like uninformed searches. Since the \textbf{maximum depth of the tree is N} and the \textbf{optimal solution is guaranteed to be at the last depth}, \textbf{DFS\_graph is much faster than BFS\_graph} because it \textbf{searches in depth} and the \textbf{optimal solution is at the last depth of the search tree}. \textbf{BFS\_graph}, on the other hand, \textbf{searches in breadth and explores almost the entire search tree} (except the last layer, where it's not always necessary to search all of this layer). Thus, a breadth-first search is not optimal for this problem. We can also notice that, for small instances (N <= 13), DFS\_graph is slightly faster than A*.
-
-Regarding the number of \textbf{\textit{explored nodes}}, BFS\_graph obviously \textbf{explores the most nodes since it explores the entire tree} (except the last layer where it's not mandatory). Then, \textbf{for small instances} (N=11/12/13), the number of \textbf{nodes explored by A* and DFS\_graph are comparable and small} (slightly better for A*). However, for \textbf{larger chessboards} (N >= 20), \textbf{A* remains very efficient and explores a reasonable number of nodes} while \textbf{DFS\_graph explores a very large number of nodes}.
-
-Overall, A* stands out as the most efficient algorithm in terms of both time and the number of explored nodes, especially as the problem size increases. Its informed search strategy allows it to focus on the \textbf{most promising paths, resulting in faster convergence to the optimal solution}.}
-\end{answers}
-
-~ 
-
-\begin{answers}[6.5cm]
-\begin{center}
-\begin{tabular}{||l||l|l|l||l|l|l||l|l|l||l|l|l||}
-\hline
-\multirow{3}{*}{Size Probl. (N)} & \multicolumn{3}{c||}{$A^{\star}$ Graph}& \multicolumn{3}{c||}{BFS Graph} & \multicolumn{3}{c||}{DFS Graph}\\
- & NS & T & EN & NS & T & EN & NS & T & EN\\
-\hline
-10 & 10 & 674.956 \mu s & 25 & 10 & 0.173 s & 2298 & 10 & 3.007 ms & 325 \\
-\hline
-11 & 11 & 973.473 \mu s & 18 & 11 & 0.886 s & 7149 & 11 & 232.65 \mu s & 24 \\
-\hline
-12 & 12 & 11.314 ms & 339 & 12 & 8.474 s & 23923 & 12 & 2.123 ms & 173 \\
-\hline
-13 & 13 & 3.168 ms & 95 & 13 & 105.935 s & 87922 & 13 & 2.295 ms & 107 \\
-\hline
-20 & 20 & 18.189 ms & 236 & TO & TO & TO & 20 & 1.069 s & 51861 \\
-\hline
-25 & 25 & 0.159 s & 1488 & TO & TO & TO & 25 & 10.356 s & 319795 \\
-\hline
-30 & 30 & 0.47 s & 3129 & TO & TO & TO & 30 & 236.313 s & 5149276 \\
-\hline
-\hline
-\end{tabular}\\
-
-~\\
-\textbf{NS}: Number of steps — \textbf{T}: Time — \textbf{EN}: Explored nodes - \textbf{TO}: Time Out - \textbf{EM}: Exceeded memory
-\end{center}
-\end{answers}
-
-
-
-\begin{enumerate}
-\setcounter{enumi}{5}
-\item \textbf{Submit} your program on INGInious, using the \textit{A*} algorithm with your best heuristic(s).
-		 Your file must be named \emph{namazon.py}. 
-      Your program should be able to, given an integer as argument, return the correct output.
-		 Your program must print to the standard output a solution to the N's given in argument for the N-Amazons problem, satisfying the described output format. \textbf{(2 pts)}
-\end{enumerate}
-
-\begin{answer}
-I followed the instructions and implemented the problem \textbf{using the modeling presented in question \textit{2.1}}. Additionally, I implemented a \textbf{class named \textit{State}}, which takes as arguments a \textbf{list of N elements} representing the chessboard with Amazons on it, as well as the \textbf{index of the first empty column from the left}. This class facilitates the implementation of the \textbf{\textit{str()}} method for \textbf{formatting the output}, as well as the \textbf{\textit{eq(), hash()}}, and \textbf{\textit{lt()}} methods, which are essential for search methods. The heuristic function for \textbf{\textit{A*}} is explained in question \textit{2.3}.
-\end{answer}
-
-\section{Local Search: Sudoku Problem (8 pts)}
-
-\begin{enumerate}
-    \item Formulate the Sudoku problem as a Local Search problem (problem, cost function, feasible solutions, optimal solutions). \textbf{(2 pts)}
-\end{enumerate}
-
-\begin{answer}
-\tiny{
-$\bullet$ \textbf{\textit{Problem:}} Given a partially filled 9x9 grid (Sudoku puzzle), represented as a list of lists representing a 2D grid where each cell is either filled with a number or with a 0 indicating an empty cell, the objective is to fill in the empty cells such that each row, column, and 3x3 subgrid contains all the digits from 1 to 9 without repetition.
-
-$\bullet$ \textbf{\textit{Cost Function:}} The cost function in this problem is the evaluation of how close a particular state of the Sudoku grid is to the goal state. In other words, it measures the number of conflicts or violations of Sudoku rules present in the grid. This cost function would assign a higher cost to states with more conflicts. An optimal solution is found when the cost evaluated by this function is equal to 0 (when all the rules are adhered to without any violations).
-
-$\bullet$ \textbf{\textit{Feasible Solutions:}} Feasible solutions are grid configurations where all the digits 1 to 9 appear exactly once in each row, column, and 3x3 subgrid, and where initially fixed cells are respected. So it's a grid where all the constraints are adhered to.
-
-$\bullet$ \textbf{\textit{Optimal Solutions:}} The optimal solution to the Sudoku problem is the best feasible solution where the cost evaluated bu the cost function is equal to zero. This corresponds to a completed Sudoku grid where all cells are filled with digits 1 to 9, satisfying all row, column, and subgrid constraints. In this problem, all feasible solutions are also optimal, as we do not consider the number of states to reach the goal or any other selection criteria. In other words, once a solution satisfies all the constraints and rules of Sudoku, it is deemed optimal, regardless of the path taken to achieve it.}
-\end{answer}
-
-\begin{enumerate}
-    \item You are given a template on Moodle: \url{sudoku.py}. Implement your own simulated annealing algorithm and your own \url{objective\_score} function. Your program will be evaluated in on 15 instances (during 3 minutes each) of which 5 are hidden. We expect you to solve (get the optimal solution) at least 12 out of the 15. \textbf{(6 pt)}
-\end{enumerate}
-
-\begin{answer}
-% ANY COMMENTS ABOUT YOUR CODE
-\scriptsize{First, I set the \textbf{\textit{cooling rate}} to \textbf{0.9999} to \textbf{allow for the maximum number of iterations} to converge towards the optimal solution. Additionally, I created a function that generates a \textbf{set containing initially fixed positions} in the Sudoku grid. I also create a function \textbf{to fill randomly the board} initially to win some time.
-For the \textbf{\textit{neighbor generation function}}, I made optimizations to make it more efficient than generating completely random neighbors. Here, \textbf{I randomly choose a cell among those not initially fixed. Then, I select a random number that does not create a conflict. If all numbers result in a conflict, I repeat the process. After 5 iterations, I return a random number in the selected cell}. This strategy helps to \textbf{escape local minima and reach the global minimum, which is 0} for this objective function. With this improvement, my solver performs significantly faster.
-Regarding the \textbf{\textit{objective function}}, I count the \textbf{number of empty cells and the number of conflicts} present in the Sudoku, taking into account the initially fixed cells as well.}
-\end{answer}
 \end{document}
