@@ -3,12 +3,7 @@ from clause import *
 """
 For the n-amazon problem, the only code you have to do is in this file.
 
-You should replace
-
-# your code here
-
-by a code generating a list of clauses modeling the n-amazons problem
-for the input file.
+You should code a list of clauses modeling the n-amazons problem for the input file.
 
 You should build clauses using the Clause class defined in clause.py
 
@@ -31,7 +26,6 @@ number of column and row in the chessboard.
 X_0_0 is the literal representing the top left corner of the chessboard
 """
 
-
 def get_expression(size: int, placed_amazons: list[(int, int)]) -> list[Clause]:
     """
     Defines the clauses for the N-amazons problem
@@ -41,8 +35,6 @@ def get_expression(size: int, placed_amazons: list[(int, int)]) -> list[Clause]:
     """
 
     expression = []
-
-    # your code here
 
     # Constrain 1 : Ensure that the already placed amazons are not on the same square
     for i, j in placed_amazons:

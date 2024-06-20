@@ -1,7 +1,6 @@
 """Helper module to call minisat."""
 
 import os
-import tempfile
 
 """Run Minisat on the given set of clauses. Return None if the clauses are
 unsatisfiable, or a solution that satisfies all the clauses (a sequence of

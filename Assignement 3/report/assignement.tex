@@ -3,7 +3,7 @@
 
 \assignment{3}
 \group{13}
-\students{Delsart Mathis}{/ (\textit{Separate Duo})}
+\students{Delsart Mathis}{/}
 
 \begin{document}
 
@@ -22,7 +22,6 @@ To prove its \textbf{consistency}, let's show that \textbf{for any node n}, $h(n
 \end{answers}
 
 
-
 \begin{enumerate}
 \setcounter{enumi}{1}
 \item Show on the left maze the states (board positions) that
@@ -30,7 +29,6 @@ are visited when performing a uniform-cost graph search, by writing the order nu
 \end{enumerate}
 
 \begin{answers}[5.2cm]
-% Your answer here
 \begin{center}
 \resizebox{5cm}{!}{
 \begin{tikzpicture}
@@ -49,7 +47,6 @@ are visited when performing a uniform-cost graph search, by writing the order nu
     \node at (1.5, 6.5) {\Large \Gentsroom};
     \node at (3.5, 2.5) {\Large \EURhv};
 
-    % Begin
     \node at (0.5, 0.5) {\Large 14};
     \node at (1.5, 0.5) {\Large 17};
     \node at (2.5, 0.5) {\Large 20};
@@ -60,21 +57,16 @@ are visited when performing a uniform-cost graph search, by writing the order nu
     \node at (0.5, 1.5) {\Large 10};
     \node at (1.5, 1.5) {\Large 15};
     \node at (2.5, 1.5) {\Large 18};
-    % \node at (3.5, 1.5) {\Large 24}; WALL
-    % \node at (4.5, 1.5) {\Large 24}; WALL
     \node at (5.5, 1.5) {\Large 29};
     \node at (6.5, 1.5) {\Large 31};
     \node at (0.5, 2.5) {\Large 7};
     \node at (1.5, 2.5) {\Large 11};
-    % \node at (2.5, 2.5) {\Large 34}; WALL
-    \node at (3.22, 2.8) {\normalsize 37}; % GOAL
+    \node at (3.22, 2.8) {\normalsize 37};
     \node at (4.5, 2.5) {\Large 36};
-    %\node at (5.5, 2.5) {\Large }; WALL
     \node at (6.5, 2.5) {\Large 33};
     \node at (0.5, 3.5) {\Large 5};
     \node at (1.5, 3.5) {\Large 8};
     \node at (2.5, 3.5) {\Large 12};
-    % \node at (3.5, 3.5) {\Large 24}; WALL
     \node at (4.5, 3.5) {\Large 35};
     \node at (5.5, 3.5) {\Large 34};
     \node at (6.5, 3.5) {\Large 32};
@@ -82,24 +74,16 @@ are visited when performing a uniform-cost graph search, by writing the order nu
     \node at (1.5, 4.5) {\Large 6};
     \node at (2.5, 4.5) {\Large 9};
     \node at (3.5, 4.5) {\Large 13};
-    % \node at (4.5, 4.5) {\Large 24}; WALL
-    % \node at (5.5, 4.5) {\Large 24}; WALL
     \node at (6.5, 4.5) {\Large 30};
     \node at (0.5, 5.5) {\Large 3};
-    % \node at (1.5, 5.5) {\Large 24}; WALL
-    % \node at (2.5, 5.5) {\Large 24}; WALL
     \node at (3.5, 5.5) {\Large 16};
     \node at (4.5, 5.5) {\Large 19};
-    % \node at (5.5, 5.5) {\Large 24}; WALL
     \node at (6.5, 5.5) {\Large 27};
     \node at (0.5, 6.5) {\Large 2};
-    \node at (1.22, 6.8) {\normalsize 1}; % PERSON
-    % \node at (2.5, 6.5) {\Large 24}; WALL
-    % \node at (3.5, 6.5) {\Large 24}; WALL
+    \node at (1.22, 6.8) {\normalsize 1};
     \node at (4.5, 6.5) {\Large 21};
     \node at (5.5, 6.5) {\Large 23};
     \node at (6.5, 6.5) {\Large 25};
-    % End
 \end{tikzpicture}
 }
 \end{center}
@@ -113,7 +97,6 @@ are visited when performing a uniform-cost graph search, by writing the order nu
 \end{enumerate}
 
 \begin{answers}[5.2cm]
-% Your answer here
 \begin{center}
 \resizebox{5cm}{!}{
 \begin{tikzpicture}
@@ -132,12 +115,6 @@ are visited when performing a uniform-cost graph search, by writing the order nu
     \node at (1.5, 6.5) {\Large \Gentsroom};
     \node at (3.5, 2.5) {\Large \EURhv};
 
-    % Begin
-    % J'avais ça avant
-    % \node at (0.5, 0.5) {\Large 20};
-    % \node at (1.5, 0.5) {\Large 17};
-    % \node at (2.5, 0.5) {\Large 18};
-    % \node at (3.5, 0.5) {\Large 19};
     \node at (0.5, 0.5) {\Large 17};
     \node at (1.5, 0.5) {\Large 18};
     \node at (2.5, 0.5) {\Large 19};
@@ -148,52 +125,37 @@ are visited when performing a uniform-cost graph search, by writing the order nu
     \node at (0.5, 1.5) {\Large 13};
     \node at (1.5, 1.5) {\Large 14};
     \node at (2.5, 1.5) {\Large 15};
-    % \node at (3.5, 1.5) {\Large 24}; WALL
-    % \node at (4.5, 1.5) {\Large 24}; WALL
     \node at (5.5, 1.5) {\Large 25};
     \node at (6.5, 1.5) {\Large 28};
     \node at (0.5, 2.5) {\Large 6};
     \node at (1.5, 2.5) {\Large 7};
-    % \node at (2.5, 2.5) {\Large 34}; WALL
-    \node at (3.22, 2.8) {\normalsize 37}; % GOAL
+    \node at (3.22, 2.8) {\normalsize 37};
     \node at (4.5, 2.5) {\Large 36};
-    %\node at (5.5, 2.5) {\Large }; WALL
     \node at (6.5, 2.5) {\Large 29};
     \node at (0.5, 3.5) {\Large 5};
     \node at (1.5, 3.5) {\Large 8};
-    \node at (2.5, 3.5) {\Large 9};
-    % \node at (3.5, 3.5) {\Large 24}; WALL
+    \node at (2.5, 3.5) {\Large 10};
     \node at (4.5, 3.5) {\Large 35};
     \node at (5.5, 3.5) {\Large 34};
     \node at (6.5, 3.5) {\Large 33};
     \node at (0.5, 4.5) {\Large 4};
-    \node at (1.5, 4.5) {\Large 10};
+    \node at (1.5, 4.5) {\Large 9};
     \node at (2.5, 4.5) {\Large 11};
     \node at (3.5, 4.5) {\Large 12};
-    % \node at (4.5, 4.5) {\Large 24}; WALL
-    % \node at (5.5, 4.5) {\Large 24}; WALL
     \node at (6.5, 4.5) {\Large 32};
     \node at (0.5, 5.5) {\Large 3};
-    % \node at (1.5, 5.5) {\Large 24}; WALL
-    % \node at (2.5, 5.5) {\Large 24}; WALL
     \node at (3.5, 5.5) {\Large 16};
     \node at (4.5, 5.5) {\Large 21};
-    % \node at (5.5, 5.5) {\Large 24}; WALL
     \node at (6.5, 5.5) {\Large 31};
     \node at (0.5, 6.5) {\Large 2};
-    \node at (1.22, 6.8) {\normalsize 1}; % PERSON
-    % \node at (2.5, 6.5) {\Large 24}; WALL
-    % \node at (3.5, 6.5) {\Large 24}; WALL
+    \node at (1.22, 6.8) {\normalsize 1};
     \node at (4.5, 6.5) {\Large 23};
     \node at (5.5, 6.5) {\Large 26};
     \node at (6.5, 6.5) {\Large 30};
-    % End
 \end{tikzpicture}
 }
 \end{center}
 \end{answers}
-
-
 
 
 \section{N-Amazons problem (8 pts)}
@@ -275,7 +237,6 @@ Regarding the number of \textbf{\textit{explored nodes}}, BFS\_graph obviously \
 Overall, A* stands out as the most efficient algorithm in terms of both time and the number of explored nodes, especially as the problem size increases. Its informed search strategy allows it to focus on the \textbf{most promising paths, resulting in faster convergence to the optimal solution}.}
 \end{answers}
 
-~ 
 
 \begin{answers}[6.5cm]
 \begin{center}
@@ -305,7 +266,6 @@ Overall, A* stands out as the most efficient algorithm in terms of both time and
 \textbf{NS}: Number of steps — \textbf{T}: Time — \textbf{EN}: Explored nodes - \textbf{TO}: Time Out - \textbf{EM}: Exceeded memory
 \end{center}
 \end{answers}
-
 
 
 \begin{enumerate}
@@ -342,7 +302,6 @@ $\bullet$ \textbf{\textit{Optimal Solutions:}} The optimal solution to the Sudok
 \end{enumerate}
 
 \begin{answer}
-% ANY COMMENTS ABOUT YOUR CODE
 \scriptsize{First, I set the \textbf{\textit{cooling rate}} to \textbf{0.9999} to \textbf{allow for the maximum number of iterations} to converge towards the optimal solution. Additionally, I created a function that generates a \textbf{set containing initially fixed positions} in the Sudoku grid. I also create a function \textbf{to fill randomly the board} initially to win some time.
 For the \textbf{\textit{neighbor generation function}}, I made optimizations to make it more efficient than generating completely random neighbors. Here, \textbf{I randomly choose a cell among those not initially fixed. Then, I select a random number that does not create a conflict. If all numbers result in a conflict, I repeat the process. After 5 iterations, I return a random number in the selected cell}. This strategy helps to \textbf{escape local minima and reach the global minimum, which is 0} for this objective function. With this improvement, my solver performs significantly faster.
 Regarding the \textbf{\textit{objective function}}, I count the \textbf{number of empty cells and the number of conflicts} present in the Sudoku, taking into account the initially fixed cells as well.}

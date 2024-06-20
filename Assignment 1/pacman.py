@@ -4,9 +4,8 @@ Name of the author(s):
 """
 
 """
-Students' name + NOMA : 
-- Mathis Delsart : 31302100
-- Leopold Helard : 81452000
+Student' name : 
+- Mathis Delsart
 """
 
 import time

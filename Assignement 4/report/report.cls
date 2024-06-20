@@ -36,7 +36,7 @@
 
 \newcommand*\students[2]{
 \newcommand{\studenta}{Delsart Mathis}
-\newcommand{\studentb}{/ (\textit{Separate Duo})}
+\newcommand{\studentb}{/}
 % \gdef\@studenta{#1} \gdef\@studentb{#2}
 }
 \newcommand*\group[1]{\newcommand{\groupnumber}{13}}

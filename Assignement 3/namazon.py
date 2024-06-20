@@ -86,15 +86,15 @@ class NAmazonsProblem(Problem):
     @return: True if the two empresses conflict, False otherwise.
     """
     def conflict(self, row1, col1, row2, col2):
-        if row1 == row2: return True # same row
-        if col1 == col2: return True # same column
+        if row1 == row2: return True # Same row
+        if col1 == col2: return True # Same column
         diff_row = abs(row1 - row2)
         diff_col = abs(col1 - col2)
-        if diff_row == diff_col: return True # same diagonal
-        if diff_row == 1 and diff_col == 4: return True # special 'knight moves' 1x4
-        if diff_row == 4 and diff_col == 1: return True # special 'knight moves' 4x1
-        if diff_row == 2 and diff_col == 3: return True # special 'knight moves' 2x3
-        if diff_row == 3 and diff_col == 2: return True # special 'knight moves' 3x2
+        if diff_row == diff_col: return True # Same diagonal
+        if diff_row == 1 and diff_col == 4: return True # Special 'knight moves' 1x4
+        if diff_row == 4 and diff_col == 1: return True # Special 'knight moves' 4x1
+        if diff_row == 2 and diff_col == 3: return True # Special 'knight moves' 2x3
+        if diff_row == 3 and diff_col == 2: return True # Special 'knight moves' 3x2
         return False
 
     """
@@ -195,7 +195,6 @@ def perfs_analyser():
     for n in N: analyseSolver(n, breadth_first_graph_search)
 
 
-# Main function
 if __name__ == "__main__":
 
     # perfs_analyser()
@@ -218,4 +217,4 @@ if __name__ == "__main__":
         print(n.state)
         print()
 
-    print("Time: ", end_timer - start_timer) # To remove for the submission
+    print("Time: ", end_timer - start_timer)

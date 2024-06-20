@@ -213,11 +213,8 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
     else:
         status = False
 
-    # Do not remove this line ! Otherwise, errors will occur during 
-    # the evaluation runned by Inginious
     clear()
 
-    # Do not change the output or Inginious will crash
     return status, output
 
 

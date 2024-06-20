@@ -295,7 +295,7 @@ In this formula, \(n\) represents \textbf{the number of samples (simulations)} p
 
 It is important to note that for the law of large numbers to be applicable, a \textbf{sufficiently large number of samples must be used}. Otherwise, the \textbf{estimated win rate may not be representative of the true win rate of the game}. \\
 
-However, \textbf{this hypothesis is not always valid}, particularly in games where the \textbf{game tree is too large to adequately sample with random simulations alone} like the game \textit{Shobu}. Another case where this assumption is invalid is when there are \textbf{very abrupt and extreme changes in state evaluations}. In this scenario, the convergence of the sample mean to the true mean can be compromised. However, this is not the case for the game \texit{Shobu}. In such cases, the effectiveness of the MCTS algorithm may be limited.
+However, \textbf{this hypothesis is not always valid}, particularly in games where the \textbf{game tree is too large to adequately sample with random simulations alone}. In the game \textit{Shobu}, random moves do not represent well an actual playout of the game. This is due to the complexity and strategic depth of the game, which random simulations fail to capture. Another case where this assumption is invalid is when there are \textbf{very abrupt and extreme changes in state evaluations}. In this scenario, the convergence of the sample mean to the true mean can be compromised. In such cases, the effectiveness of the MCTS algorithm may be limited.
 
 \end{answers}
 
@@ -465,37 +465,8 @@ We observe that our agent explores many more nodes than the other agents, which 
 \subsubsection{Conclusion}
 These three tests demonstrate that our agent outperforms the MCTS, AlphaBeta, and Random agents, which is not surprising since they are basic algorithms without improvements. Our agent is much slower to maximize calculation time but is more optimal in its decision-making. It also explores many more nodes than the other agents, showing that it acquires better knowledge of the search tree with each move.
 
-\subsection{Note}
-My partner hardly did anything. So, I didn’t include his name. It wasn’t an oversight. I sent you an
-email explaining the situation (and to the professor as well). For this assignment, he did questions
-1.2, 1.3, and the HeatMap graph for this question. That’s all... Everything else is mine, including all
-the code.
-
 \end{answers}
 
-
 \subsection{Contest (10 points, to be submitted on Inginious)}
-
-% Ajoute la table ici
-
-    
-
-% \begin{table}[]
-% \begin{center}
-% \begin{tabular}{|c|c|c|c|c|}
-% \hline
-% Agents &
-%   \multicolumn{2}{c|}{\begin{tabular}[c]{@{}c@{}}Number of explored node \\ Against RandomAgent\end{tabular}} &
-%   \multicolumn{2}{c|}{\begin{tabular}[c]{@{}c@{}}Node exploré \\ Against himself\end{tabular}} \\ \hline
-% & Total & By move & Total & By move \\ \hline
-% AlphaBeta & 259626 & 32453 & 231968 & 38661 \\
-% Contest   & 2329478 & 258830 & 3165854 & 243527 \\
-% MCTS      & 11948 & 351 & 5358 & 49 \\
-% Random    & 0  & 0 & 0  & 0 \\ \hline
-% \end{tabular}
-% \caption{Explored Nodes for each agents}
-% \end{center}
-% \end{table}
-
 
 \end{document}

@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+
 from main import *
 
 def createBarGraph(percentages, white_player, black_player):
@@ -93,7 +94,7 @@ def getNodeExploredAgainstRandomAgent():
 def getNodeExploredAgainstAgent():
     
     agents_white = [AlphaBetaAgent(0, ShobuGame(), 3), UCTAgent(0, ShobuGame(), 100), AI(0, ShobuGame()), RandomAgent(0, ShobuGame())]
-    agents_black  = [AlphaBetaAgent(0, ShobuGame(), 3), UCTAgent(0, ShobuGame(), 100), AI(0, ShobuGame()), RandomAgent(0, ShobuGame())]
+    agents_black = [AlphaBetaAgent(0, ShobuGame(), 3), UCTAgent(0, ShobuGame(), 100), AI(0, ShobuGame()), RandomAgent(0, ShobuGame())]
 
     for i in range(4):
         agent_white = agents_white[i]

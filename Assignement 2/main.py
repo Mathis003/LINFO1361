@@ -109,7 +109,6 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
         return 1, n_moves
     
 
-
 """
 Estimates the average branching factor of the game tree by simulating a number of games.
 
@@ -161,6 +160,7 @@ def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
     while run != -1 and display:
         run = update_ui(state)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Shobu game')
     parser.add_argument('-w', '--white', type=str, default="random", help='White player ["random | human | alphabeta | mcts | agent"]')
@@ -178,11 +178,7 @@ if __name__ == "__main__":
         actions = read_logs(args.replay)
         replay_game(actions, args.delay_time, display=args.display, start_turn=args.start_turn)
     elif args.n > 1:
-        winners = {
-            0: 0,
-            1: 0,
-            -1: 0
-        }
+        winners = {0: 0, 1: 0, -1: 0}
         total_moves = []
         agent_white, agent_black = get_agents(args, args.display)
         for i in range(0, args.n):

@@ -1,5 +1,4 @@
 import random
-import time
 import math
 import sys
 import collections
@@ -92,15 +91,6 @@ def generate_neighbor(current_solution, fixed_positions, MAX_ITER=5):
     
     return best_neightboor
 
-    # # Randomly select a new value for the tile from the available values
-    # new_value = random.choice(list(values))
-
-    # # Copy the current solution and update the value of the selected tile to create the neighbor
-    # neighbor = [row[:] for row in current_solution]
-    # neighbor[i][j] = new_value
-    # return neighbor
-
-
 """
 Get the set of fixed positions in the Sudoku board.
 
@@ -172,7 +162,6 @@ def simulated_annealing_solver(initial_board):
             temperature *= cooling_rate
 
         except:
-            # print("Break asked");
             break
         
     return best_solution, best_score
@@ -197,20 +186,15 @@ def read_sudoku_from_file(file_path):
         sudoku = [[int(num) for num in line.strip()] for line in file]
     return sudoku
 
-# Main function
+
 if __name__ == "__main__":
 
     # Read the Sudoku puzzle from the text file
     initial_board = read_sudoku_from_file(sys.argv[1])
 
     # Solve the Sudoku puzzle using simulated annealing
-    start_timer = time.perf_counter()
     solved_board, current_score = simulated_annealing_solver(initial_board)
-    end_timer = time.perf_counter()
 
     # Print the solved Sudoku board and the objective score
     print_board(solved_board)
     print("\nValue(C):", current_score)
-
-    # Do not display the time taken in the final submission on Inginious
-    # print("\nTime taken:", end_timer - start_timer, "seconds")

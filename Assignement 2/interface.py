@@ -1,7 +1,6 @@
 import pygame
 from shobu import ShobuState, ShobuGame
 
-
 SCREEN_WIDTH        = 800
 SCREEN_HEIGHT       = 800
 PLAYER_RADIUS       = 25
@@ -46,7 +45,7 @@ def draw_piece(board_index, piece_index, color):
 
 
 def draw_state(state: ShobuState):
-    # draw the boards
+    # Draw the boards
     draw_board((OFFSET_BOARD, OFFSET_BOARD), LINE_COLOR, BOARD_LIGHT_COLOR)
     draw_board((OFFSET_BOARD, OFFSET_BOARD + GAP_BOARD + SQUARE_SIZE * 4), LINE_COLOR, BOARD_LIGHT_COLOR)
     draw_board((OFFSET_BOARD + GAP_BOARD + SQUARE_SIZE * 4, OFFSET_BOARD), LINE_COLOR, BOARD_DARK_COLOR)

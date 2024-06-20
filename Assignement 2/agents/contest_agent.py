@@ -2,6 +2,8 @@ from agents.agent import Agent
 
 import time
 
+""" This agent is very bad, I probably made a lot of mistakes. """
+
 """
 Idea to implement :
     - Forward pruning : prune branches that are unlikely to be good or decrease the depth of the search for these branches
