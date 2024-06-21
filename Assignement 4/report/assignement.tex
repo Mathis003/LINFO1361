@@ -49,7 +49,7 @@ at \url{https://www.pycsp.org/documentation/constraints/} to find the definition
 \footnotesize{
 The first choice is \textbf{\textit{Individual Variables (One for Each Cell)}}. In this case, the variables are $x_{i,j}$, where $i$ and $j$ represent the row and column indices respectively. $x_{i,j}$ represents whether an amazon is placed in cell $(i,j)$ of the chessboard. The domain is therefore $\{0, 1\}$, where 0 represents no amazon and 1 represents an amazon. There are thus $n^2$ variables (n = size of chessboard) with 2 possible values for each variable. There are therefore $2^{n^2}$ states as a result.
 
-The second choice is \textbf{\textit{Array Variables (One for Each Column)}}. The variables are $x_i$, where $i$ represents the column index. $x_i$ represents the row index where an amazon is placed in column $i$ of the chessboard. The domain is therefore $\{-1, 0, 1, 2, ..., n - 1\}$, where each value represents the row index of the amazon in that column. Here, -1 represents no amazon placed in the column. There are thus $n$ variables with $n$ possible values for each variable (n = size of chessboard). There are therefore $n^n$ states as a result.
+The second choice is \textbf{\textit{Array Variables (One for Each Column)}}. The variables are $x_i$, where $i$ represents the column index. $x_i$ represents the row index where an amazon is placed in column $i$ of the chessboard. The domain is therefore $\{0, 1, 2, ..., n - 1\}$, where each value represents the row index of the amazon in that column. There are thus $n$ variables with $n$ possible values for each variable (n = size of chessboard). There are therefore $n^n$ states as a result.
 
 The \textbf{second model is superior for CSP} because it involves \textbf{fewer variables}, and the \textbf{domain} of each variable can be \textbf{easily reduced} compared to the first model. $2^{n^2}$ is \textbf{much worse than} $n^n$! This results in a \textbf{smaller search space}. Additionally, it allows for the definition of simpler and more effective constraints to ensure that each amazon is placed correctly and that there are no conflicts between the amazons. For instance, the constraint "only one amazon per row" can be easily expressed using the \textbf{AllDifferent} constraint on the array of variables (see next questions).
 }
@@ -142,26 +142,30 @@ $( A \lor \neg B) \land (\neg B \Rightarrow \neg C) \land \neg (D \Rightarrow \n
 \end{enumerate}
 
 \begin{answers}[10cm]
-\small
-{
-To express the N-amazons problem using propositional logic, we define the proposition:\par
-$X_{ij}$ $:=$ \textit{there is an amazon in the square at row i and column j}. \\
+\small{
+To model the problem using propositional logic, we define a set of clauses that represent the requirements for positioning the Amazons on a chessboard. Let introduce the following variables:
+\begin{itemize}
+    \item $X_{i,j}$ : A propositional variable that is \textit{True} if an Amazon is placed on the square (i, j) of the chessboard.
+    \item $D_{ijkl}$: A propositional variable that is \textit{True} if positions (i, j) and (k, l) are on the same (anti-)diagonal, where $(i \neq k)$ and $(|i - k| = |j - l|)$.
+    \item $K_{ijkl}$: A propositional variable that is \textit{True} if position (k, l) is reachable from (i, j) via one of the knight-like moves of the Amazon, specifically $((k = i \pm 3 \land l = j \pm 2) \lor (k = i \pm 2 \land l = j \pm 3) \lor (k = i \pm 4 \land l = j \pm 1) \lor (k = i \pm 1 \land l = j \pm 4))$.
+    \item $X_{ij}^0$: A propositional variable that is \textit{True} if an Amazon is placed at the position (i, j) on the initial chessboard.
+\end{itemize} 
 
-1. \textbf{Already Placed Amazons}:\par 
-We assert the existence of already placed amazons by asserting the truth of the $X_{ij}$ proposition for those specific tiles $(i, j)$.
+Now, the constraints can be expressed as follows:
 
-2. \textbf{At Least One Amazon per Row and Column}:\par 
-For each row $i$, we assert that there exists at least one tile $(i, j)$ such that $X_{ij}$ is true. Similarly, for each column $j$, we assert the existence of at least one tile $(i, j)$ such that $X_{ij}$ is true.
+1. \textbf{At least one Amazon per row}: $\bigwedge_{i=0}^{N-1} (X_{i,0} \lor X_{i,1} \lor X_{i,2} \lor ... \lor X_{i,N-1})$
 
-3. \textbf{No Two Amazons on the Same Row or Column}:\par 
-For each row $i$, we assert that for any pair of distinct tiles $(i, j)$ and $(i, k)$, if $X_{ij}$ is true, then $X_{ik}$ must be false, and vice versa. Similarly, for each column $j$, we assert the same condition for pairs of distinct tiles $(i, j)$ and $(k, j)$.
+2. \textbf{At least one Amazon per column}: $\bigwedge_{i=0}^{N-1} (X_{0,i} \lor X_{1,i} \lor X_{2,i} \lor ... \lor X_{N-1,i})$
 
-4. \textbf{At Most One Amazon per Diagonal}:\par
-For each pair of cells where the absolute difference in their horizontal position matches the absolute difference in their vertical position, we establish a condition such that if one cell implies $X_{ij}$ to be true, then the other must be false. This ensures that two amazons will not be on the same diagonal.
+3. \textbf{At most one Amazon per row}: $\bigwedge_{i=0}^{N-1} \bigwedge_{j=0}^{N-1} \bigwedge_{k=j+1}^{N-1} \neg (X_{i,j} \land X_{i,k})$
 
-5. \textbf{At Most One Amazon per 3x2 Move and 4x1 Move}:\par Similarly, For each pair of cells where the absolute difference in their horizontal position matches the value 3 (resp. 2, 4, 1) and the absolute difference in their vertical position matches the value 2 (resp. 3, 1, 4), we establish a condition such that if one cell implies $X_{ij}$ to be true, then the other must be false. This ensures that two amazons will not be on two tiles that attack each other by the 3x2 Move or the 4x1 Move. \\
+4. \textbf{At most one Amazon per column}: $\bigwedge_{i=0}^{N-1} \bigwedge_{j=0}^{N-1} \bigwedge_{k=j+1}^{N-1} \neg (X_{j,i} \land X_{k,i})$
+   
+5. \textbf{At most one Amazon per (anti-)diagonal}: $\bigwedge_{i=0}^{N-1} \bigwedge_{j=0}^{N-1} \bigwedge_{k=0}^{N-1} \bigwedge_{l=0}^{N-1} (D_{ijkl} \implies \neg (X_{i,j} \land X_{k,l}))$
+   
+6. \textbf{An Amazon initially positioned on the board has not been moved}: $\bigwedge\limits_{i=0}^{N-1} \bigwedge\limits_{j=0}^{N-1} (X_{ij}^0 \implies X_{i,j})$
 
-You can review the submitted code on Inginious to see the Python implementation.
+7. \textbf{An Amazon doesn't threaten another with knight-like moves}: \\ $\bigwedge_{i=0}^{N-1} \bigwedge_{j=0}^{N-1} \bigwedge_{k=0}^{N-1} \bigwedge_{l=0}^{N-1} (K_{ijkl} \implies \neg (X_{i,j} \land X_{k,l}))$
 }
 \end{answers}
 \newpage
